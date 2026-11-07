@@ -1,0 +1,720 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>HTML Fidelity Converter</title>
+<style type="text/css">
+<![CDATA[
+:root{--bg:#0a0e1a;--el:#111827;--card:rgba(17,24,39,.78);--hover:rgba(30,41,59,.9);--border:rgba(71,85,105,.58);--fg:#f1f5f9;--mut:#94a3b8;--accent:#22c55e;--accent2:#10b981;--soft:rgba(34,197,94,.1);--r:13px;--font:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--mono:ui-monospace,SFMono-Regular,Consolas,monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
+body{min-height:100vh;background:radial-gradient(ellipse at top,#101b2e 0%,var(--bg) 56%);color:var(--fg);font-family:var(--font);padding:18px}
+.shell{max-width:1240px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:15px}
+.panel{min-width:0;background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:15px;display:flex;flex-direction:column;gap:11px;box-shadow:0 12px 35px rgba(0,0,0,.14)}
+.panel h2{font-size:15px;font-weight:750;letter-spacing:.02em}
+.sub{font-size:12px;line-height:1.5;color:var(--mut)}
+.dropzone{border:2px dashed var(--border);border-radius:10px;padding:19px;text-align:center;cursor:pointer;background:rgba(15,23,42,.48);font-weight:650;font-size:14px;transition:.15s}
+.dropzone:hover,.dropzone.drag,.dropzone:focus-visible{border-color:var(--accent);background:var(--soft);outline:none}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.mode-tabs{display:flex;gap:4px;background:var(--el);padding:4px;border-radius:8px;border:1px solid var(--border);flex:1;min-width:180px}
+.mode-btn{flex:1;padding:8px 10px;border-radius:6px;border:0;background:transparent;color:var(--mut);font:650 13px var(--font);cursor:pointer}
+.mode-btn.active{background:var(--accent);color:#04130a}
+.chk{display:flex;align-items:center;gap:6px;font-size:12px;color:#dbe4ef;cursor:pointer;user-select:none;white-space:nowrap}
+.chk input{accent-color:var(--accent);width:15px;height:15px;cursor:pointer}
+textarea.code{width:100%;min-height:390px;flex:1;resize:vertical;background:#070a12;border:1px solid var(--border);border-radius:8px;padding:11px;color:#e2e8f0;font:12px/1.55 var(--mono);outline:none;tab-size:2}
+textarea.code:focus,.inp:focus{border-color:var(--accent)}
+.btn{padding:9px 13px;border-radius:8px;border:1px solid var(--border);background:var(--el);color:var(--fg);font:650 13px var(--font);cursor:pointer;transition:.15s}
+.btn:hover:not(:disabled){border-color:rgba(74,222,128,.55);background:var(--hover)}
+.btn:disabled{opacity:.38;cursor:not-allowed}
+.btn.pri{background:linear-gradient(135deg,var(--accent),var(--accent2));border:0;color:#04130a}
+.inp{min-width:130px;flex:1;background:var(--el);border:1px solid var(--border);border-radius:8px;padding:9px 10px;color:var(--fg);font:500 13px var(--mono);outline:none}
+.status{font:600 11px var(--mono);padding:7px 9px;border-radius:6px;border:1px solid var(--border);color:var(--mut);white-space:nowrap}
+.status.ok{color:#4ade80;border-color:rgba(34,197,94,.38)}
+.status.err{color:#f87171;border-color:rgba(239,68,68,.42)}
+.report{border:1px solid var(--border);border-radius:8px;padding:10px 11px;color:var(--mut);font-size:12px;line-height:1.55;background:rgba(7,10,18,.45);overflow-wrap:anywhere}
+.report strong{color:#dce7f4}
+.report .warn{color:#fbbf24}
+.report .good{color:#4ade80}
+.actions .btn{flex:1}
+.actions .btn.pri{flex:2}
+.mode-note{min-height:34px;padding:8px 10px;border-left:2px solid var(--accent);border-radius:0 6px 6px 0;background:rgba(34,197,94,.055);font-size:11px;line-height:1.45;color:#b6c6d8}
+@media(max-width:850px){.shell{grid-template-columns:1fr}textarea.code{min-height:280px}}
+@media(max-width:480px){body{padding:9px}.panel{padding:11px}.row{gap:6px}}
+]]>
+</style>
+</head>
+<body>
+<main class="shell">
+  <section class="panel" aria-labelledby="sourceHeading">
+    <h2 id="sourceHeading">Source HTML</h2>
+    <p class="sub">Upload an HTML, XHTML, or SVG file, drop it here, or paste the source code.</p>
+    <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-controls="fileInput">Upload / Drop File</div>
+    <input type="file" id="fileInput" accept=".html,.htm,.xhtml,.svg,text/html,application/xhtml+xml,image/svg+xml" hidden="hidden" />
+    <label class="sub" for="baseUrl">Original website URL (optional; helps resolve relative assets/modules)</label>
+    <input type="url" class="inp" id="baseUrl" placeholder="https://example.com/path/" autocomplete="url" />
+    <div class="row">
+      <div class="mode-tabs" role="group" aria-label="Output format">
+        <button type="button" class="mode-btn active" id="modeXhtml" aria-pressed="true">XHTML</button>
+        <button type="button" class="mode-btn" id="modeRuntime" aria-pressed="false">XHTML · Preserve Runtime</button>
+        <button type="button" class="mode-btn" id="modeSvg" aria-pressed="false">SVG</button>
+      </div>
+      <label class="chk"><input type="checkbox" id="optCdata" checked="checked" /> <span>CDATA for scripts / styles</span></label>
+      <button type="button" class="btn" id="clearInBtn">Clear</button>
+    </div>
+    <div class="mode-note" id="modeNote">Native XHTML converts the markup to XML. Use “XHTML · Preserve Runtime” for pages that rely on HTML parser behavior, dynamic screens, document.write(), or complex JavaScript.</div>
+    <textarea class="code" id="inputCode" placeholder="Paste HTML source here..." spellcheck="false" autocapitalize="off" autocomplete="off"></textarea>
+    <button type="button" class="btn pri" id="convertBtn">Convert and Validate</button>
+  </section>
+
+  <section class="panel" aria-labelledby="outputHeading">
+    <h2 id="outputHeading">Converted Output</h2>
+    <div class="row">
+      <input type="text" class="inp" id="outName" value="index.xhtml" aria-label="Output filename" autocomplete="off" />
+      <span class="status" id="statusBox" role="status" aria-live="polite">Ready</span>
+    </div>
+    <textarea class="code" id="outputCode" readonly="readonly" spellcheck="false" aria-label="Converted output"></textarea>
+    <div class="report" id="reportBox" aria-live="polite">The integrity report will appear here after conversion.</div>
+    <div class="row actions">
+      <button type="button" class="btn pri" id="downloadBtn" disabled="disabled">Download</button>
+      <button type="button" class="btn" id="previewBtn" disabled="disabled">Preview</button>
+      <button type="button" class="btn" id="copyBtn" disabled="disabled">Copy</button>
+    </div>
+  </section>
+</main>
+
+<script type="text/javascript">
+<![CDATA[
+(function () {
+  "use strict";
+
+  const $ = id => document.getElementById(id);
+  const dropzone = $("dropzone"), fileInput = $("fileInput"), inputCode = $("inputCode"), outputCode = $("outputCode");
+  const outName = $("outName"), statusBox = $("statusBox"), modeXhtml = $("modeXhtml"), modeRuntime = $("modeRuntime"), modeSvg = $("modeSvg");
+  const optCdata = $("optCdata"), convertBtn = $("convertBtn"), downloadBtn = $("downloadBtn");
+  const baseUrlInput = $("baseUrl");
+  const previewBtn = $("previewBtn"), copyBtn = $("copyBtn"), clearInBtn = $("clearInBtn"), reportBox = $("reportBox"), modeNote = $("modeNote");
+
+  const XML_NS = "http://www.w3.org/XML/1998/namespace";
+  const XMLNS_NS = "http://www.w3.org/2000/xmlns/";
+  const XLINK_NS = "http://www.w3.org/1999/xlink";
+  const SVG_NS = "http://www.w3.org/2000/svg";
+  const XHTML_NS = "http://www.w3.org/1999/xhtml";
+  const MATHML_NS = "http://www.w3.org/1998/Math/MathML";
+
+  let targetMode = "xhtml";
+  let baseFileName = "index";
+  let lastResult = "";
+  let lastMime = "application/xhtml+xml;charset=utf-8";
+
+  const VOID_TAGS = new Set(("area base br col embed hr img input link meta param source track wbr").split(" "));
+  const BOOL_ATTRS = new Set(("allowfullscreen async autofocus autoplay checked controls default defer disabled formnovalidate hidden inert ismap itemscope loop multiple muted nomodule novalidate open playsinline readonly required reversed selected").split(" "));
+
+  const SVG_TAG_NAMES = ("altGlyph altGlyphDef altGlyphItem animateColor animateMotion animateTransform clipPath feBlend feColorMatrix feComponentTransfer feComposite feConvolveMatrix feDiffuseLighting feDisplacementMap feDistantLight feDropShadow feFlood feFuncA feFuncB feFuncG feFuncR feGaussianBlur feImage feMerge feMergeNode feMorphology feOffset fePointLight feSpecularLighting feSpotLight feTile feTurbulence foreignObject glyphRef linearGradient radialGradient solidColor textPath").split(" ");
+  const SVG_TAG_MAP = Object.create(null);
+  SVG_TAG_NAMES.forEach(name => { SVG_TAG_MAP[name.toLowerCase()] = name; });
+
+  const SVG_ATTR_NAMES = ("accentHeight accumulate additive alignmentBaseline allowReorder alphabetic amplitude arabicForm ascent attributeName attributeType autoReverse azimuth baselineShift baseFrequency baseProfile bbox bias calcMode capHeight class colorInterpolation colorInterpolationFilters colorProfile colorRendering contentScriptType contentStyleType diffuseConstant dominantBaseline divisor enableBackground exponent externalResourcesRequired fillOpacity fillRule filter filterRes filterUnits floodColor floodOpacity focusable fontFamily fontSize fontSizeAdjust fontStretch fontStyle fontVariant fontWeight format from fx fy g1 g2 glyphName glyphOrientationHorizontal glyphOrientationVertical glyphRef gradientTransform gradientUnits hanging horizAdvX horizOriginX horizOriginY ideographic imageRendering in in2 intercept k keyPoints keySplines keyTimes kernelMatrix kernelUnitLength kerning lang lengthAdjust letterSpacing lightingColor limitingConeAngle local markerEnd markerHeight markerMid markerStart markerUnits mathematical max min mode numOctaves offset opacity operator order orientation origin overlinePosition overlineThickness panose1 paintOrder pathLength patternContentUnits patternTransform patternUnits pointerEvents pointsAtX pointsAtY pointsAtZ preserveAlpha preserveAspectRatio primitiveUnits radius refX refY renderingIntent repeatCount repeatDur requiredExtensions requiredFeatures restart result rotate rx ry scale seed slope spacing specularConstant specularExponent speed spreadMethod startOffset stdDeviation stemh stemv stitchTiles stopColor stopOpacity strikethroughPosition strikethroughThickness string strokeDasharray strokeDashoffset strokeLinecap strokeLinejoin strokeMiterlimit strokeOpacity strokeWidth surfaceScale systemLanguage tableValues target targetX targetY textAnchor textDecoration textLength textRendering to transformOrigin u1 u2 underlinePosition underlineThickness unicode unicodeBidi unicodeRange unitsPerEm vAlphabetic vHanging vIdeographic vMathematical values vectorEffect version vertAdvY vertOriginX vertOriginY viewBox viewTarget visibility widths wordSpacing writingMode x x1 x2 xChannelSelector xHeight xlinkActuate xlinkArcrole xlinkHref xlinkRole xlinkShow xlinkTitle xlinkType y y1 y2 yChannelSelector zoomAndPan").split(" ");
+  const SVG_ATTR_MAP = Object.create(null);
+  SVG_ATTR_NAMES.forEach(name => { SVG_ATTR_MAP[name.toLowerCase()] = name; });
+  SVG_ATTR_MAP.viewbox = "viewBox";
+  SVG_ATTR_MAP.preserveaspectratio = "preserveAspectRatio";
+  const MATHML_ATTR_MAP = Object.create(null);
+  ("definitionURL displayStyle scriptLevel scriptMinSize scriptSizeMultiplier mathBackground mathColor mathSize mathVariant").split(" ").forEach(name => {
+    MATHML_ATTR_MAP[name.toLowerCase()] = name;
+  });
+
+  function isValidXmlName(name) {
+    // XML names may contain Unicode letters and marks, not just ASCII.
+    return /^[\p{L}_:][\p{L}\p{N}._:\-\u00B7\u0300-\u036F\u203F-\u2040]*$/u.test(name);
+  }
+
+  function cleanXmlCharacters(value) {
+    let out = "";
+    for (const ch of String(value == null ? "" : value)) {
+      const cp = ch.codePointAt(0);
+      const valid = cp === 0x9 || cp === 0xA || cp === 0xD ||
+        (cp >= 0x20 && cp <= 0xD7FF) || (cp >= 0xE000 && cp <= 0xFFFD) ||
+        (cp >= 0x10000 && cp <= 0x10FFFF);
+      out += valid ? ch : "\uFFFD";
+    }
+    return out;
+  }
+
+  function escapeXmlText(value) {
+    return cleanXmlCharacters(value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  function escapeXmlAttr(value) {
+    return escapeXmlText(value).replace(/"/g, "&quot;").replace(/\t/g, "&#9;").replace(/\n/g, "&#10;").replace(/\r/g, "&#13;");
+  }
+
+  function safeComment(value) {
+    return String(value || "").replace(/--/g, "- -").replace(/-$/, "- ");
+  }
+
+  function unwrapCdataComments(raw, kind) {
+    let value = String(raw == null ? "" : raw);
+    const patterns = kind === "style"
+      ? [/^\s*\/\*<!\[CDATA\[\*\/\r?\n?/, /\r?\n?\/\*\]\]>\*\/\s*$/]
+      : [/^\s*\/\/<!\[CDATA\[\r?\n?/, /\r?\n?\/\/\]\]>\s*$/];
+    value = value.replace(patterns[0], "");
+    value = value.replace(patterns[1], "");
+    return value;
+  }
+
+  function cdataContent(raw, kind) {
+    const clean = cleanXmlCharacters(unwrapCdataComments(raw, kind));
+    if (!optCdata.checked) return escapeXmlText(clean);
+    const split = clean.replace(/\]\]>/g, "]]]]" + "><![CDATA[>");
+    return "<![CDATA[" + split + "]]" + ">";
+  }
+
+  function getElementNamespace(node, parentNs) {
+    if (node.namespaceURI) return node.namespaceURI;
+    const local = String(node.localName || node.nodeName || "").toLowerCase();
+    if (local === "svg") return SVG_NS;
+    if (parentNs === SVG_NS) return SVG_NS;
+    if (parentNs === MATHML_NS) return MATHML_NS;
+    return XHTML_NS;
+  }
+
+  function serializeDoctype(doctype) {
+    if (!doctype) return "";
+    const name = doctype.name || "html";
+    const pub = doctype.publicId || "";
+    const sys = doctype.systemId || "";
+    const quote = value => {
+      if (!value.includes('"')) return '"' + value + '"';
+      if (!value.includes("'")) return "'" + value + "'";
+      throw new Error("The source document type contains an identifier that cannot be represented safely in XML.");
+    };
+    if (pub) return "<!DOCTYPE " + name + " PUBLIC " + quote(pub) + (sys ? " " + quote(sys) : "") + ">";
+    if (sys) return "<!DOCTYPE " + name + " SYSTEM " + quote(sys) + ">";
+    return "<!DOCTYPE " + name + ">";
+  }
+
+  function serializeNode(node, parentNs, options) {
+    if (node.nodeType === Node.TEXT_NODE) return escapeXmlText(node.nodeValue || "");
+    if (node.nodeType === Node.CDATA_SECTION_NODE) {
+      const value = cleanXmlCharacters(node.nodeValue || "").replace(/\]\]>/g, "]]]]" + "><![CDATA[>");
+      return "<![CDATA[" + value + "]]" + ">";
+    }
+    if (node.nodeType === Node.COMMENT_NODE) return "<!--" + safeComment(cleanXmlCharacters(node.nodeValue)) + "-->";
+    if (node.nodeType === Node.PROCESSING_INSTRUCTION_NODE) {
+      const data = String(node.data || "").replace(/\?>/g, "? >");
+      return "<?" + node.target + (data ? " " + data : "") + "?>";
+    }
+    if (node.nodeType !== Node.ELEMENT_NODE) return "";
+
+    const ns = getElementNamespace(node, parentNs);
+    const rawLocal = node.localName || node.nodeName.toLowerCase();
+    let elementLocalName = rawLocal;
+    if (ns === SVG_NS) elementLocalName = SVG_TAG_MAP[rawLocal.toLowerCase()] || rawLocal;
+    else if (ns === XHTML_NS) elementLocalName = rawLocal.toLowerCase();
+    const elementName = node.prefix ? node.prefix + ":" + elementLocalName : elementLocalName;
+    if (!isValidXmlName(elementName)) throw new Error("Element name is not valid in XML: " + elementName);
+
+    let out = "<" + elementName;
+    const written = new Set();
+    const explicitNamespaces = new Map();
+    for (let i = 0; i < node.attributes.length; i++) {
+      const a = node.attributes[i];
+      if (a.namespaceURI === XMLNS_NS || a.name === "xmlns" || a.name.startsWith("xmlns:")) {
+        explicitNamespaces.set(a.name === "xmlns" ? "" : a.name.slice(6), a.value);
+      }
+    }
+
+    function addNamespace(prefix, uri) {
+      const key = prefix ? "xmlns:" + prefix : "xmlns";
+      if (written.has(key)) return;
+      if (explicitNamespaces.has(prefix || "") && explicitNamespaces.get(prefix || "") === uri) return;
+      out += " " + key + '="' + escapeXmlAttr(uri) + '"';
+      written.add(key);
+    }
+
+    if (ns !== parentNs || (explicitNamespaces.has("") && explicitNamespaces.get("") !== ns)) addNamespace("", ns);
+    const elementColon = elementName.indexOf(":");
+    if (elementColon > 0) {
+      const elementPrefix = elementName.slice(0, elementColon);
+      if (elementPrefix === "xmlns") throw new Error("The xmlns prefix cannot be used as an element prefix.");
+      if (elementPrefix !== "xml") addNamespace(elementPrefix, ns);
+      else if (ns !== XML_NS) throw new Error("The xml prefix is reserved for the XML namespace.");
+    }
+
+    if (ns === XHTML_NS && elementName === "html") {
+      const language = node.getAttribute("lang") || node.getAttribute("xml:lang") || "en";
+      if (!node.hasAttribute("lang")) {
+        out += ' lang="' + escapeXmlAttr(language) + '"';
+        written.add("lang");
+      }
+      if (!node.hasAttribute("xml:lang")) {
+        out += ' xml:lang="' + escapeXmlAttr(language) + '"';
+        written.add("xml:lang");
+      }
+    }
+
+    for (let i = 0; i < node.attributes.length; i++) {
+      const attr = node.attributes[i];
+      let attrName = attr.name;
+      const attrNs = attr.namespaceURI || "";
+
+      if (attrNs === XMLNS_NS || attrName === "xmlns" || attrName.startsWith("xmlns:")) {
+        if (written.has(attrName)) continue;
+        if (!isValidXmlName(attrName)) throw new Error("Invalid namespace attribute: " + attrName);
+        out += " " + attrName + '="' + escapeXmlAttr(attr.value) + '"';
+        written.add(attrName);
+        continue;
+      }
+
+      if (attrNs === XLINK_NS) {
+        attrName = "xlink:" + attr.localName;
+        addNamespace("xlink", XLINK_NS);
+      } else if (attrNs === XML_NS) {
+        attrName = "xml:" + attr.localName;
+      } else if (attr.prefix && attr.prefix !== "xml" && attr.prefix !== "xmlns") {
+        addNamespace(attr.prefix, attrNs);
+        attrName = attr.prefix + ":" + attr.localName;
+      } else if (ns === SVG_NS && SVG_ATTR_MAP[attrName.toLowerCase()]) {
+        attrName = SVG_ATTR_MAP[attrName.toLowerCase()];
+      } else if (ns === MATHML_NS && MATHML_ATTR_MAP[attrName.toLowerCase()]) {
+        attrName = MATHML_ATTR_MAP[attrName.toLowerCase()];
+      } else if (ns === XHTML_NS && !attrName.startsWith("xml:")) {
+        attrName = attrName.toLowerCase();
+      }
+
+      if (!isValidXmlName(attrName)) throw new Error("Attribute name is not valid in XML: " + attrName);
+      if (written.has(attrName)) continue;
+      written.add(attrName);
+
+      let attrValue = attr.value;
+      if (ns === XHTML_NS && BOOL_ATTRS.has(attrName.toLowerCase())) attrValue = attrName.toLowerCase();
+      out += " " + attrName + '="' + escapeXmlAttr(attrValue) + '"';
+    }
+
+    if (ns === XHTML_NS && VOID_TAGS.has(elementName)) return out + " />";
+    out += ">";
+
+    if ((elementName === "script" || elementName === "style") && (ns === XHTML_NS || ns === SVG_NS)) {
+      const rawText = node.textContent || "";
+      out += cdataContent(rawText, elementName === "style" ? "style" : "script");
+      return out + "</" + elementName + ">";
+    }
+
+    // HTML template children live in a separate DocumentFragment, not in childNodes.
+    const childContainer = ns === XHTML_NS && elementName === "template" && node.content ? node.content : node;
+    for (let child = childContainer.firstChild; child; child = child.nextSibling) {
+      out += serializeNode(child, ns, options);
+    }
+    return out + "</" + elementName + ">";
+  }
+
+  function serializeDocumentMisc(doc, root) {
+    let result = "";
+    for (let node = doc.firstChild; node; node = node.nextSibling) {
+      if (node === root || node.nodeType === Node.DOCUMENT_TYPE_NODE) continue;
+      if (node.nodeType === Node.COMMENT_NODE || node.nodeType === Node.PROCESSING_INSTRUCTION_NODE) {
+        result += serializeNode(node, null, {} ) + "\n";
+      }
+    }
+    return result;
+  }
+
+  function isParserError(doc) {
+    if (!doc || !doc.documentElement) return true;
+    const root = doc.documentElement;
+    if (String(root.localName || root.nodeName).toLowerCase() === "parsererror") return true;
+    return doc.getElementsByTagNameNS("http://www.mozilla.org/newlayout/xml/parsererror.xml", "parsererror").length > 0;
+  }
+
+  function parseHtml(source) {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(source, "text/html");
+    if (!doc || !doc.documentElement || !doc.body) throw new Error("The browser could not parse the supplied HTML.");
+    return doc;
+  }
+
+  function ensureXhtmlMetadata(doc) {
+    const head = doc.head || doc.documentElement.insertBefore(doc.createElement("head"), doc.documentElement.firstChild);
+    // Remove only encoding declarations. Preserve refresh, CSP, viewport, and every other http-equiv meta.
+    head.querySelectorAll("meta[charset]").forEach(el => el.remove());
+    head.querySelectorAll('meta[http-equiv]').forEach(el => {
+      if ((el.getAttribute("http-equiv") || "").toLowerCase() === "content-type") el.remove();
+    });
+    const meta = doc.createElement("meta");
+    meta.setAttribute("charset", "UTF-8");
+    head.insertBefore(meta, head.firstChild);
+
+    // XML documents do not implement the HTML parser's document.write(). This
+    // best-effort shim supports the common parser-time use case by inserting
+    // written markup immediately after the currently executing script.
+    if (!head.querySelector('script[data-xhtml-document-write-shim="1"]')) {
+      const shim = doc.createElement("script");
+      shim.setAttribute("type", "text/javascript");
+      shim.setAttribute("data-xhtml-document-write-shim", "1");
+      shim.textContent = [
+        "(function(){",
+        "  var cursors = typeof WeakMap === 'function' ? new WeakMap() : null;",
+        "  function write(markup){",
+        "    markup = Array.prototype.join.call(arguments, '');",
+        "    var anchor = document.currentScript;",
+        "    var parent = anchor && anchor.parentNode;",
+        "    if (!parent) parent = document.body || document.documentElement;",
+        "    if (!parent) return;",
+        "    var cursor = cursors && cursors.get(anchor || parent);",
+        "    if (!cursor || cursor.parentNode !== parent) cursor = anchor && anchor.parentNode === parent ? anchor : null;",
+        "    var range = document.createRange();",
+        "    if (cursor) range.setStartAfter(cursor); else range.selectNodeContents(parent), range.collapse(false);",
+        "    var fragment = range.createContextualFragment(markup);",
+        "    var last = fragment.lastChild;",
+        "    range.insertNode(fragment);",
+        "    if (cursors) cursors.set(anchor || parent, last || cursor || parent.lastChild);",
+        "  }",
+        "  try { Object.defineProperty(document, 'write', {configurable:true, value:write}); } catch(e) { document.write = write; }",
+        "  try { Object.defineProperty(document, 'writeln', {configurable:true, value:function(){ write(Array.prototype.join.call(arguments, '') + '\n'); }}); } catch(e) { document.writeln = function(){ write(Array.prototype.join.call(arguments, '') + '\n'); }; }",
+        "})();"
+      ].join("\n");
+      head.insertBefore(shim, head.children.length ? head.children[1] : null);
+    }
+  }
+
+  function collectReport(doc, mode) {
+    const all = selector => Array.from(doc.querySelectorAll(selector));
+    const scripts = all("script");
+    const links = all('link[rel~="stylesheet"]');
+    const media = all("img, video, audio, source, track, object, embed");
+    const frames = all("iframe, frame");
+    const templates = all("template");
+    const forms = all("form");
+    const resourceAttrs = all("script[src],link[href],img[src],img[srcset],video[src],video[poster],audio[src],source[src],source[srcset],track[src],iframe[src],frame[src],object[data],embed[src],input[src],image[href],use[href]");
+    const hasResourceUrls = resourceAttrs.some(el => ["src", "srcset", "href", "poster", "data"].some(name => {
+      const value = el.getAttribute(name);
+      return value && !/^(?:#|data:|blob:|javascript:)/i.test(value.trim());
+    })) || /url\s*\(|@import\b/i.test(all("style").map(el => el.textContent || "").join("\n") + "\n" + all("[style]").map(el => el.getAttribute("style") || "").join("\n"));
+    const inlineHandlers = all("*").reduce((sum, el) => sum + Array.from(el.attributes).filter(a => /^on/i.test(a.name)).length, 0);
+    const externalScripts = scripts.filter(el => el.hasAttribute("src")).length;
+    const inlineScripts = scripts.length - externalScripts;
+    const externalStyles = links.length;
+    const moduleScripts = scripts.filter(el => (el.getAttribute("type") || "").toLowerCase() === "module").length;
+    const scriptText = scripts.map(el => el.textContent || "").join("\n");
+    const risks = [];
+
+    if (externalScripts || externalStyles || hasResourceUrls) {
+      risks.push("External and relative resource URLs were retained, not bundled. Keep the original folders and file paths next to the converted file, or keep absolute URLs accessible.");
+    }
+    if (mode === "svg") {
+      risks.push("SVG output runs the page inside an XHTML iframe in SVG foreignObject. This preserves normal HTML document APIs better than placing HTML directly in SVG, but top-level window checks, service workers, downloads, popups, fullscreen, and browser-specific features can still behave differently. Use XHTML for the closest match.");
+    }
+    if (/\bdocument\s*\.\s*write\s*\(/i.test(scriptText) && mode === "xhtml") {
+      risks.push("A document.write()/writeln() compatibility shim was added for common parser-time calls. It inserts markup after the active script; late writes, document.open()/close(), parser-state-dependent scripts, and unusual table parsing may still differ from a native HTML parser.");
+    }
+    if (/serviceWorker|navigator\s*\.\s*serviceWorker/i.test(scriptText)) {
+      risks.push("Service-worker code was detected. Service workers generally require a served HTTP(S) page and may not work when the converted file is opened directly from disk.");
+    }
+    if (/\b(import\s*\(|import\s+[\s\S]{0,80}?\sfrom\s*["'])/m.test(scriptText) && !moduleScripts) {
+      risks.push("JavaScript module imports may depend on external files and need their original URL structure.");
+    }
+    if (all("canvas").length) risks.push("Canvas elements and drawing scripts are retained; an already-rendered live canvas bitmap or interaction state is not captured from source markup.");
+    if (all("video, audio").length) risks.push("Media elements and their source URLs are retained. Playback still depends on the original media files, codecs, and browser support.");
+
+    const lines = [
+      '<span class="good">XML well-formedness checked</span>',
+      "Scripts: <strong>" + scripts.length + "</strong> (" + inlineScripts + " inline, " + externalScripts + " external; " + moduleScripts + " module)",
+      "Stylesheets: <strong>" + externalStyles + " external</strong>; media/resource elements: <strong>" + media.length + "</strong>; frames: <strong>" + frames.length + "</strong>",
+      "Forms: <strong>" + forms.length + "</strong>; templates: <strong>" + templates.length + "</strong>; inline event attributes: <strong>" + inlineHandlers + "</strong>"
+    ];
+    if (risks.length) {
+      lines.push('<span class="warn"><strong>Compatibility notes</strong></span>');
+      risks.forEach(note => lines.push('<span class="warn">• ' + escapeHtml(note) + "</span>"));
+    } else {
+      lines.push('<span class="good">No common runtime compatibility flags were detected. This is not a guarantee that every browser-specific feature will behave identically.</span>');
+    }
+    return lines.join("<br />");
+  }
+
+  function escapeHtml(value) {
+    return String(value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  function prepareRuntimeSource(source) {
+    const rawBase = baseUrlInput.value.trim();
+    if (!rawBase) return source;
+    let parsed;
+    try { parsed = new URL(rawBase); }
+    catch (_) { throw new Error("The original website URL is invalid. Enter a full http:// or https:// URL."); }
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      throw new Error("The original website URL must start with http:// or https://.");
+    }
+    const baseTag = '<base href="' + escapeXmlAttr(parsed.href) + '">';
+    if (/<base\b[^>]*\bhref\s*=/i.test(source)) {
+      return source.replace(/<base\b[^>]*\bhref\s*=\s*(["'])[^"']*\1[^>]*>/i, baseTag);
+    }
+    if (/<head\b[^>]*>/i.test(source)) return source.replace(/<head\b[^>]*>/i, match => match + baseTag);
+    if (/<html\b[^>]*>/i.test(source)) return source.replace(/<html\b[^>]*>/i, match => match + '<head>' + baseTag + '</head>');
+    return '<head>' + baseTag + '</head>' + source;
+  }
+
+  function makeRuntimeXhtml(source, sourceDoc) {
+    // Keep the supplied HTML source intact and let a real HTML parser execute it
+    // inside srcdoc. This preserves parser-sensitive features such as document.write,
+    // script-driven screen changes, dynamic DOM construction, and iframe navigation.
+    // The outer file remains a well-formed XHTML document.
+    source = prepareRuntimeSource(source);
+    const title = sourceDoc && sourceDoc.title ? sourceDoc.title : "Converted HTML page";
+    const wrapper =
+      '<?xml version="1.0" encoding="UTF-8"?>\n' +
+      '<html xmlns="' + XHTML_NS + '" lang="en" xml:lang="en">\n' +
+      '<head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />' +
+      '<title>' + escapeXmlText(title) + '</title></head>\n' +
+      '<body style="margin:0;padding:0;min-height:100vh;overflow:hidden">' +
+      '<iframe title="Original HTML page" srcdoc="' + escapeXmlAttr(source) + '" ' +
+      'style="display:block;width:100%;height:100vh;border:0;margin:0;padding:0" ' +
+      'width="100%" height="100%" allowfullscreen="allowfullscreen"></iframe>' +
+      '</body></html>\n';
+    const check = new DOMParser().parseFromString(wrapper, "application/xhtml+xml");
+    if (isParserError(check) || String(check.documentElement.localName).toLowerCase() !== "html") {
+      throw new Error("Generated full-behavior XHTML wrapper is not well-formed XML.");
+    }
+    return {
+      code: wrapper,
+      doc: check,
+      sourceDoc: sourceDoc,
+      report: collectReport(sourceDoc, "xhtml-runtime") +
+        '<br /><span class="good">Full-behavior mode keeps the original HTML source inside an XHTML iframe. The browser uses its native HTML parser for the inner page, preserving screen transitions and parser-dependent JavaScript.</span>' +
+        '<br /><span class="warn">For relative files and persistent storage, host the XHTML output over HTTP(S) beside the original assets. Opening local files can restrict storage, modules, or resource access.</span>'
+    };
+  }
+
+  function convertHtml(rawInput, mode) {
+    const source = String(rawInput || "").replace(/^\uFEFF/, "");
+    if (!source.trim()) throw new Error("Paste HTML or choose a file first.");
+    const parser = new DOMParser();
+
+    // A standalone SVG is XML, not HTML. Parse it as SVG XML so namespaces,
+    // SVG element names, comments, and CDATA are not damaged by HTML parsing.
+    if (mode === "svg") {
+      const svgDoc = parser.parseFromString(source, "image/svg+xml");
+      if (!isParserError(svgDoc) && String(svgDoc.documentElement.localName).toLowerCase() === "svg") {
+        const svgRoot = svgDoc.documentElement;
+        const svgMarkup = serializeNode(svgRoot, null, {});
+        const misc = serializeDocumentMisc(svgDoc, svgRoot);
+        const svgOutput = '<?xml version="1.0" encoding="UTF-8"?>\n' + (svgDoc.doctype ? serializeDoctype(svgDoc.doctype) + "\n" : "") + misc + svgMarkup + "\n";
+        const svgOutputCheck = parser.parseFromString(svgOutput, "image/svg+xml");
+        if (isParserError(svgOutputCheck) || String(svgOutputCheck.documentElement.localName).toLowerCase() !== "svg") {
+          throw new Error("The standalone SVG could not be serialized as well-formed XML.");
+        }
+        return {
+          code: svgOutput,
+          doc: svgOutputCheck,
+          sourceDoc: svgDoc,
+          report: "<span class=\"good\">Standalone SVG parsed as XML and serialized with SVG namespaces preserved.</span>"
+        };
+      }
+    }
+
+    const doc = parseHtml(source);
+    const htmlRoot = doc.documentElement;
+    if (mode === "xhtml-runtime") {
+      return makeRuntimeXhtml(source, doc);
+    }
+    if (mode === "svg") {
+      // Keep the original HTML source byte-for-character at the markup level.
+      // The srcdoc browsing context parses it as HTML, not as XML.
+      const svgRuntimeSource = prepareRuntimeSource(source);
+      const svg = '<?xml version="1.0" encoding="UTF-8"?>\n' +
+        '<svg xmlns="' + SVG_NS + '" xmlns:xlink="' + XLINK_NS + '" width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" style="display:block;position:fixed;inset:0;width:100vw;height:100vh;margin:0;padding:0;overflow:auto">\n' +
+        '  <foreignObject x="0" y="0" width="100%" height="100%">\n' +
+        '    <iframe xmlns="' + XHTML_NS + '" title="Converted HTML page" width="100%" height="100%" allowfullscreen="allowfullscreen" style="display:block;width:100%;height:100%;border:0;margin:0;padding:0" srcdoc="' + escapeXmlAttr(svgRuntimeSource) + '"></iframe>\n' +
+        '  </foreignObject>\n' +
+        '</svg>\n';
+      const svgCheck = parser.parseFromString(svg, "image/svg+xml");
+      if (isParserError(svgCheck) || String(svgCheck.documentElement.localName).toLowerCase() !== "svg") {
+        throw new Error("Generated SVG wrapper is not well-formed XML.");
+      }
+      return { code: svg, doc: svgCheck, sourceDoc: doc, report: collectReport(doc, mode) };
+    }
+
+    ensureXhtmlMetadata(doc);
+    const doctype = doc.doctype ? serializeDoctype(doc.doctype) : "";
+    const misc = serializeDocumentMisc(doc, htmlRoot);
+    const htmlMarkup = serializeNode(htmlRoot, null, {});
+    const xhtml = '<?xml version="1.0" encoding="UTF-8"?>\n' + (doctype ? doctype + "\n" : "") + misc + htmlMarkup + "\n";
+
+    if (mode === "xhtml") {
+      const check = parser.parseFromString(xhtml, "application/xhtml+xml");
+      if (isParserError(check) || String(check.documentElement.localName).toLowerCase() !== "html") {
+        const detail = check && check.documentElement ? check.documentElement.textContent : "Unknown XML parsing error";
+        throw new Error("Generated XHTML is not well-formed: " + String(detail).slice(0, 260));
+      }
+      return { code: xhtml, doc: check, sourceDoc: doc, report: collectReport(doc, mode) };
+    }
+
+  }
+
+  function setStatus(kind, message) {
+    statusBox.className = "status" + (kind ? " " + kind : "");
+    statusBox.textContent = message;
+  }
+
+  function setButtons(enabled) {
+    downloadBtn.disabled = previewBtn.disabled = copyBtn.disabled = !enabled;
+  }
+
+  function runConversion() {
+    const raw = inputCode.value;
+    if (!raw.trim()) {
+      outputCode.value = "";
+      reportBox.textContent = "The integrity report will appear here after conversion.";
+      lastResult = "";
+      setStatus("", "Ready");
+      setButtons(false);
+      return;
+    }
+    try {
+      const result = convertHtml(raw, targetMode);
+      outputCode.value = result.code;
+      lastResult = result.code;
+      lastMime = targetMode === "svg" ? "image/svg+xml;charset=utf-8" : "application/xhtml+xml;charset=utf-8";
+      reportBox.innerHTML = result.report;
+      setButtons(true);
+      setStatus("ok", "Valid XML · " + (result.code.length / 1024).toFixed(1) + " KB");
+    } catch (error) {
+      lastResult = "";
+      outputCode.value = "";
+      reportBox.textContent = error && error.message ? error.message : String(error);
+      setButtons(false);
+      setStatus("err", "Conversion failed");
+    }
+  }
+
+  function setMode(mode) {
+    targetMode = mode;
+    modeXhtml.classList.toggle("active", mode === "xhtml");
+    modeRuntime.classList.toggle("active", mode === "xhtml-runtime");
+    modeSvg.classList.toggle("active", mode === "svg");
+    modeXhtml.setAttribute("aria-pressed", String(mode === "xhtml"));
+    modeRuntime.setAttribute("aria-pressed", String(mode === "xhtml-runtime"));
+    modeSvg.setAttribute("aria-pressed", String(mode === "svg"));
+    const extension = mode === "svg" ? ".svg" : ".xhtml";
+    outName.value = (outName.value.trim().replace(/\.(xhtml|html|htm|svg)$/i, "") || baseFileName || "index") + extension;
+    modeNote.textContent = mode === "xhtml"
+      ? "Native XHTML converts the markup to XML and adds a best-effort document.write()/writeln() shim. Some HTML parser-specific behavior can differ."
+      : mode === "xhtml-runtime"
+        ? "Best general-purpose option for interactive sites: keeps the original HTML app intact inside a browser-parsed iframe. Enter the original page URL above so relative assets, CSS, and JavaScript modules can resolve. Site assets and server/API endpoints must remain available."
+        : "SVG mode wraps the page in an SVG foreignObject with an XHTML srcdoc iframe. Browser/frame restrictions mean SVG cannot guarantee identical behavior for every page.";
+    if (inputCode.value.trim()) runConversion();
+  }
+
+  async function readFileText(file) {
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    let encoding = "utf-8";
+    if (bytes.length >= 2 && bytes[0] === 0xFE && bytes[1] === 0xFF) encoding = "utf-16be";
+    else if (bytes.length >= 2 && bytes[0] === 0xFF && bytes[1] === 0xFE) encoding = "utf-16le";
+    else if (bytes.length >= 4 && bytes[0] === 0x00 && bytes[1] === 0x3C && bytes[2] === 0x00 && bytes[3] === 0x3F) encoding = "utf-16be";
+    else if (bytes.length >= 4 && bytes[0] === 0x3C && bytes[1] === 0x00 && bytes[2] === 0x3F && bytes[3] === 0x00) encoding = "utf-16le";
+    else if (!(bytes.length >= 3 && bytes[0] === 0xEF && bytes[1] === 0xBB && bytes[2] === 0xBF)) {
+      const head = new TextDecoder("windows-1252").decode(bytes.slice(0, Math.min(bytes.length, 8192)));
+      const declared = head.match(/<meta\b[^>]*\bcharset\s*=\s*["']?([^\s"'/>;]+)/i) ||
+        head.match(/<meta\b[^>]*\bcontent\s*=\s*["'][^"']*?charset\s*=\s*([^\s"';]+)/i) ||
+        head.match(/<\?xml\b[^>]*\bencoding\s*=\s*["']([^"']+)["']/i);
+      if (declared && declared[1]) encoding = declared[1].trim();
+    }
+    try {
+      return new TextDecoder(encoding).decode(bytes);
+    } catch (error) {
+      return new TextDecoder("utf-8").decode(bytes);
+    }
+  }
+
+  async function handleFile(file) {
+    if (!file) return;
+    fileInput.value = "";
+    baseFileName = file.name.replace(/\.(html|htm|xhtml|svg)$/i, "") || "index";
+    outName.value = baseFileName + (targetMode === "svg" ? ".svg" : ".xhtml");
+    try {
+      inputCode.value = await readFileText(file);
+      runConversion();
+    } catch (error) {
+      setStatus("err", "File read failed");
+      reportBox.textContent = error && error.message ? error.message : "The selected file could not be read.";
+      setButtons(false);
+    }
+  }
+
+  function openPicker() { fileInput.click(); }
+  dropzone.addEventListener("click", openPicker);
+  dropzone.addEventListener("keydown", event => {
+    if (event.key === "Enter" || event.key === " ") { event.preventDefault(); openPicker(); }
+  });
+  fileInput.addEventListener("change", event => {
+    if (event.target.files && event.target.files[0]) handleFile(event.target.files[0]);
+  });
+  dropzone.addEventListener("dragover", event => { event.preventDefault(); dropzone.classList.add("drag"); });
+  dropzone.addEventListener("dragleave", () => dropzone.classList.remove("drag"));
+  dropzone.addEventListener("drop", event => {
+    event.preventDefault();
+    dropzone.classList.remove("drag");
+    if (event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0]) handleFile(event.dataTransfer.files[0]);
+  });
+
+  modeXhtml.addEventListener("click", () => setMode("xhtml"));
+  modeRuntime.addEventListener("click", () => setMode("xhtml-runtime"));
+  modeSvg.addEventListener("click", () => setMode("svg"));
+  optCdata.addEventListener("change", () => { if (inputCode.value.trim()) runConversion(); });
+  convertBtn.addEventListener("click", runConversion);
+  baseUrlInput.addEventListener("change", () => { if (inputCode.value.trim() && targetMode !== "xhtml") runConversion(); });
+  inputCode.addEventListener("input", runConversion);
+  clearInBtn.addEventListener("click", () => {
+    inputCode.value = outputCode.value = fileInput.value = "";
+    runConversion();
+  });
+
+  function makeOutputBlob() {
+    return new Blob([lastResult], { type: lastMime });
+  }
+
+  downloadBtn.addEventListener("click", () => {
+    if (!lastResult) return;
+    const url = URL.createObjectURL(makeOutputBlob());
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    let name = outName.value.trim() || (targetMode === "svg" ? "index.svg" : "index.xhtml");
+    const wanted = targetMode === "svg" ? ".svg" : ".xhtml";
+    name = (name.replace(/\.(xhtml|html|htm|svg)$/i, "") || "index") + wanted;
+    anchor.download = name;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 2500);
+  });
+
+  previewBtn.addEventListener("click", () => {
+    if (!lastResult) return;
+    const url = URL.createObjectURL(makeOutputBlob());
+    const opened = window.open(url, "_blank");
+    if (!opened) reportBox.textContent = "Preview was blocked by the browser's popup blocker. Allow popups for this page and try again.";
+    else opened.opener = null;
+    window.setTimeout(() => URL.revokeObjectURL(url), 60000);
+  });
+
+  copyBtn.addEventListener("click", async () => {
+    if (!lastResult) return;
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) await navigator.clipboard.writeText(lastResult);
+      else {
+        outputCode.focus();
+        outputCode.select();
+        if (!document.execCommand("copy")) throw new Error("Clipboard access is unavailable.");
+      }
+      setStatus("ok", "Copied");
+    } catch (error) {
+      setStatus("err", "Copy failed");
+      reportBox.textContent = error && error.message ? error.message : "Clipboard access is unavailable. Select the output and copy it manually.";
+    }
+  });
+})();
+]]>
+</script>
+</body>
+</html>
