@@ -1,0 +1,328 @@
+<!-- Washed for GN 2.0 from the game library's 869.html (freebuisness/html 5639f84). Removed: nothing. Game files locked to the commits checked. -->
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <base href="https://cdn.jsdelivr.net/gh/web-ports/fnaf-into-the-pit@df6e074be181d4d2fb419241a25138bb8acbb928/">
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <style>
+      
+html, body {
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+#unity-container,
+#unity-container.unity-desktop,
+#unity-container.unity-mobile {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  transform: none;
+  overflow: hidden;
+}
+
+#unity-canvas,
+.unity-mobile #unity-canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  background: #231F20;
+}
+
+#unity-loading-bar {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: none;
+}
+
+#unity-logo {
+  width: 154px;
+  height: 130px;
+  background: url('unity-logo-dark.png') no-repeat center;
+}
+
+#unity-progress-bar-empty {
+  width: 141px;
+  height: 18px;
+  margin-top: 10px;
+  margin-left: 6.5px;
+  background: url('progress-bar-empty-dark.png') no-repeat center;
+}
+
+#unity-progress-bar-full {
+  width: 0%;
+  height: 18px;
+  margin-top: 10px;
+  background: url('progress-bar-full-dark.png') no-repeat center;
+}
+
+#unity-footer {
+  position: relative;
+}
+
+.unity-mobile #unity-footer {
+  display: none;
+}
+
+#unity-webgl-logo {
+  float: left;
+  width: 204px;
+  height: 38px;
+  background: url('webgl-logo.png') no-repeat center;
+}
+
+#unity-build-title {
+  float: right;
+  margin-right: 10px;
+  line-height: 38px;
+  font-family: arial;
+  font-size: 18px;
+}
+
+#unity-fullscreen-button {
+  float: right;
+  width: 38px;
+  height: 38px;
+  background: url('fullscreen-button.png') no-repeat center;
+}
+
+#unity-warning {
+  position: absolute;
+  left: 50%;
+  top: 5%;
+  transform: translateX(-50%);
+  background: white;
+  padding: 10px;
+  display: none;
+}
+
+#loading-text {
+  position: fixed;
+  top: 20px;
+  left: 0;
+  width: 100%;
+  margin: 0 !important;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+#loading-text {
+  font-weight: bold;
+  background: linear-gradient(
+    270deg,
+    #ff0000,
+    #ff7f00,
+    #ffff00,
+    #00ff00,
+    #0000ff,
+    #4b0082,
+    #8f00ff
+  );
+  background-size: 400% 400%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: rainbow 3s ease infinite;
+}
+
+@keyframes rainbow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+    </style>
+  </head>
+  <body>
+    <div id="loading-text"
+    style="color: white; font-size: 48px; font-family: cursive; text-align: center; margin-top: 20px;"> LOADING...
+  </div>
+    <div id="unity-container">
+      <canvas id="unity-canvas" width=960 height=600 tabindex="-1"></canvas>
+      <div id="unity-loading-bar">
+        <div id="unity-logo"></div>
+        <div id="unity-progress-bar-empty">
+          <div id="unity-progress-bar-full"></div>
+        </div>
+      </div>
+      <div id="unity-warning"> </div>
+    </div>
+    <script>
+
+var loadingText = document.querySelector("#loading-text");
+    let totalBytes = 0;
+    let loadedBytes = 0;
+
+    // GN 2.0: the exact size of every part (from the game's repo at the locked
+    // commit). A part that arrives short is downloaded again, and a joined file
+    // of the wrong size is never saved or used. A cut-off download used to get
+    // saved and then break the game on every load ("extends past end of the module").
+    const PART_SIZES = {"Build/INTOTHEPIT.data.part1":20866662,"Build/INTOTHEPIT.data.part10":20866662,"Build/INTOTHEPIT.data.part11":20866662,"Build/INTOTHEPIT.data.part12":20866662,"Build/INTOTHEPIT.data.part13":20866662,"Build/INTOTHEPIT.data.part14":20866662,"Build/INTOTHEPIT.data.part15":20866662,"Build/INTOTHEPIT.data.part16":20866662,"Build/INTOTHEPIT.data.part17":20866662,"Build/INTOTHEPIT.data.part18":20866662,"Build/INTOTHEPIT.data.part19":20866662,"Build/INTOTHEPIT.data.part2":20866662,"Build/INTOTHEPIT.data.part20":20866662,"Build/INTOTHEPIT.data.part21":20866662,"Build/INTOTHEPIT.data.part22":20866662,"Build/INTOTHEPIT.data.part23":20866662,"Build/INTOTHEPIT.data.part24":20866662,"Build/INTOTHEPIT.data.part25":20866662,"Build/INTOTHEPIT.data.part26":9013795,"Build/INTOTHEPIT.data.part3":20866662,"Build/INTOTHEPIT.data.part4":20866662,"Build/INTOTHEPIT.data.part5":20866662,"Build/INTOTHEPIT.data.part6":20866662,"Build/INTOTHEPIT.data.part7":20866662,"Build/INTOTHEPIT.data.part8":20866662,"Build/INTOTHEPIT.data.part9":20866662,"Build/INTOTHEPIT.wasm.part1":20866662,"Build/INTOTHEPIT.wasm.part2":20866662,"Build/INTOTHEPIT.wasm.part3":20866662,"Build/INTOTHEPIT.wasm.part4":20866662,"Build/INTOTHEPIT.wasm.part5":20495558,"StreamingAssets/aa/WebGL/webglprefabs_assets_all_5ea291f575ddd5dc7ae765c62c8e6be3.bundle.part1":20866662,"StreamingAssets/aa/WebGL/webglprefabs_assets_all_5ea291f575ddd5dc7ae765c62c8e6be3.bundle.part2":20866662,"StreamingAssets/aa/WebGL/webglprefabs_assets_all_5ea291f575ddd5dc7ae765c62c8e6be3.bundle.part3":243011};
+    const expectedSize = parts => parts.reduce((n, p) => n + (PART_SIZES[p] || 0), 0);
+
+    async function fetchWithProgress(url) {
+      for (let attempt = 1; ; attempt++) {
+        try { return await fetchPartOnce(url); }
+        catch (e) {
+          if (attempt >= 4) throw e;
+          console.warn("Retrying " + url + ": " + e.message);
+          await new Promise(r => setTimeout(r, 1000 * attempt));
+        }
+      }
+    }
+    async function fetchPartOnce(url) {
+      const startLoaded = loadedBytes;
+      const response = await fetch(url, { cache: "no-store" });
+      if (!response.ok) throw new Error("HTTP " + response.status);
+      const reader = response.body.getReader();
+      let chunks = [];
+      let received = 0;
+      while (true) {
+        const {
+          done,
+          value
+        } = await reader.read();
+        if (done) break;
+        received += value.length;
+        loadedBytes += value.length;
+        chunks.push(value);
+        let mbDone = (loadedBytes / (1024 * 1024)).toFixed(2);
+        let mbTotal = '645.25';
+        loadingText.textContent = `LOADING... ${mbDone} MB / ${mbTotal} MB`;
+      }
+      // GN 2.0: keep the part as a Blob instead of copying it into one big
+      // array. The browser can keep Blobs on disk, so the 645 MB doesn't all
+      // have to sit in memory (it used to be copied 2-3 times, which crashed phones).
+      const blob = new Blob(chunks);
+      chunks.length = 0;
+      const want = PART_SIZES[url];
+      if (want && blob.size !== want) {
+        loadedBytes = startLoaded;  // don't count the bad try
+        throw new Error("got " + blob.size + " of " + want + " bytes");
+      }
+      return blob;
+    }
+
+    // Copies saved by the old page could be cut off, so they're not used
+    try { caches.delete("intothepit-cache"); } catch (e) {}
+    async function mergeFiles(fileParts, cacheKey) {
+      const want = expectedSize(fileParts);
+      let cache = null;
+      try { cache = await caches.open("intothepit-cache-v2"); } catch (e) {}
+      const cachedResponse = cache && await cache.match(cacheKey);
+      if (cachedResponse) {
+        const blob = await cachedResponse.blob();
+        if (!want || blob.size === want) return URL.createObjectURL(blob);
+        await cache.delete(cacheKey);  // broken copy: download again
+      }
+      // Up to 3 parts at a time, so only a few parts' downloads are in memory at once
+      const buffers = new Array(fileParts.length);
+      let next = 0;
+      const worker = async () => { while (next < fileParts.length) { const i = next++; buffers[i] = await fetchWithProgress(fileParts[i]); } };
+      await Promise.all([worker(), worker(), worker()]);
+      const mergedBlob = new Blob(buffers);
+      buffers.length = 0;
+      if (want && mergedBlob.size !== want) throw new Error(cacheKey + " is incomplete (" + mergedBlob.size + " of " + want + " bytes)");
+      // Saved for next time; if the device is out of space, just play without saving
+      try { if (cache) await cache.put(cacheKey, new Response(mergedBlob)); } catch (e) {}
+      return URL.createObjectURL(mergedBlob);
+    }
+
+    function getParts(file, start, end) {
+      let parts = [];
+      for (let i = start; i <= end; i++) {
+        parts.push(file + ".part" + i);
+      }
+      return parts;
+    }
+    (async () => {
+      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || (navigator.deviceMemory && navigator.deviceMemory < 4)) {
+        const note = document.createElement("div");
+        note.textContent = "Heads up: this game is 645 MB and may run out of memory on phones. It works best on a computer or Chromebook.";
+        note.style.cssText = "color:#fbbf24;font:16px system-ui,sans-serif;text-align:center;margin:8px 16px";
+        loadingText.after(note);
+      }
+      const [dataUrl, wasmUrl, prebundle] = await Promise.all([
+        mergeFiles(getParts("Build/INTOTHEPIT.data", 1, 26), "INTOTHEPIT.data"),
+        mergeFiles(getParts("Build/INTOTHEPIT.wasm", 1, 5), "INTOTHEPIT.wasm"),
+        mergeFiles(getParts("StreamingAssets/aa/WebGL/webglprefabs_assets_all_5ea291f575ddd5dc7ae765c62c8e6be3.bundle", 1, 3), "webglprefabs_assets_all_5ea291f575ddd5dc7ae765c62c8e6be3.bundle"),
+      ]);
+      var container = document.querySelector("#unity-container");
+      var canvas = document.querySelector("#unity-canvas");
+      var loadingBar = document.querySelector("#unity-loading-bar");
+      var progressBarFull = document.querySelector("#unity-progress-bar-full");
+      var warningBanner = document.querySelector("#unity-warning");
+
+      function unityShowBanner(msg, type) {
+
+      }
+
+      const originalOpen = XMLHttpRequest.prototype.open;
+      XMLHttpRequest.prototype.open = function (method, url, ...rest) {
+        if (url.includes("webglprefabs_assets_all_5ea291f575ddd5dc7ae765c62c8e6be3.bundle")) {
+          url = prebundle;
+        }
+        return originalOpen.call(this, method, url, ...rest);
+      };
+
+      var config = {
+        dataUrl: dataUrl,
+        frameworkUrl: "Build/INTOTHEPIT.framework.js",
+        codeUrl: wasmUrl,
+        streamingAssetsUrl: "StreamingAssets",
+        companyName: "Mega Cat Studios",
+        productName: "Five Nights at Freddy's Into the Pit",
+        productVersion: "Release 1.0.11.7",
+        showBanner: unityShowBanner,
+        // GN 2.0: keep Unity's real error text (it only shows "abort({})")
+        printErr: function (msg) { window.__gnLastErr = String(msg); console.error(msg); },
+      };
+
+      // By default Unity keeps WebGL canvas render target size matched with
+      // the DOM size of the canvas element (scaled by window.devicePixelRatio)
+      // Set this to false if you want to decouple this synchronization from
+      // happening inside the engine, and you would instead like to size up
+      // the canvas DOM size and WebGL render target sizes yourself.
+      // config.matchWebGLToCanvasSize = false;
+
+      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+        // Mobile device style: fill the whole browser client area with the game canvas:
+        var meta = document.createElement('meta');
+        meta.name = 'viewport';
+        meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
+        document.getElementsByTagName('head')[0].appendChild(meta);
+      }
+
+
+      loadingBar.style.display = "block";
+
+      var script = document.createElement("script");
+      script.src = "Build/INTOTHEPIT.loader.js";
+      script.onload = () => {
+        createUnityInstance(canvas, config, (progress) => {
+          progressBarFull.style.width = 100 * progress + "%";
+        }).then((unityInstance) => {
+          loadingBar.style.display = "none";
+          loadingText.remove();
+        }).catch((message) => {
+          // GN 2.0: a plain message instead of a popup full of code
+          const why = String(window.__gnLastErr || message).split("\n")[0].slice(0, 220);
+          const mobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+          loadingText.style.cssText += ";font:18px/1.4 system-ui,sans-serif;margin:16px;color:#e2e8f0";
+          loadingText.textContent = (mobile
+            ? "Into The Pit couldn't start on this device. Its game code is 99 MB, and phone browsers often can't prepare code that big. It works best on a computer or Chromebook."
+            : "Into The Pit couldn't start. Try closing other tabs and loading it again.") + "  Details: " + why;
+          console.error(message);
+        });
+      };
+      document.body.appendChild(script);
+    })();
+    </script>
+  </body>
+</html>

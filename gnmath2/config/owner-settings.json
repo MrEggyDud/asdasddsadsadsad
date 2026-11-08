@@ -1,0 +1,78 @@
+{
+  "siteMode": "open",
+  "disabledZones": [
+    "653",
+    "300013",
+    "375",
+    "381",
+    "385",
+    "387",
+    "388",
+    "389",
+    "390",
+    "395",
+    "396",
+    "402",
+    "406",
+    "407",
+    "408",
+    "416",
+    "419",
+    "421",
+    "422"
+  ],
+  "announcement": {
+    "text": "HUGE UPDATE! account system to save progress and various things!",
+    "enabled": false,
+    "type": "info"
+  },
+  "siteMessage": "",
+  "siteBackAt": "2026-11-04T20:20:00.000Z",
+  "statusOverride": {
+    "level": "auto",
+    "text": ""
+  },
+  "motd": {
+    "text": "Test",
+    "enabled": false
+  },
+  "footerLinks": [],
+  "visitorDefaults": {
+    "mode": "dark",
+    "theme": "red",
+    "cardSize": "medium",
+    "fontSize": "medium",
+    "defaultSort": "name",
+    "compactMode": false,
+    "hideFeatured": false,
+    "autofocusSearch": true,
+    "showPlayCount": true,
+    "warnBeforeUnload": false,
+    "reducedMotion": false
+  },
+  "trustedReporters": [
+    {
+      "uid": "qka6JaQ3xNM1OTQH91KsYZMjZxb2",
+      "name": "poopmaster"
+    },
+    {
+      "uid": "8xHCDF2Lz3cV0v1FZj9xWvl7ouw2",
+      "name": "zae115"
+    },
+    {
+      "uid": "AKOZ92Fya7dXqNDcSFl8T6nLHwn2",
+      "name": "lsp"
+    }
+  ],
+  "siteAccess": {
+    "allowed": [
+      {
+        "uid": "qka6JaQ3xNM1OTQH91KsYZMjZxb2",
+        "name": "poopmaster"
+      }
+    ],
+    "pass": null
+  },
+  "ownerUid": "AKOZ92Fya7dXqNDcSFl8T6nLHwn2",
+  "updatedAt": "2026-11-07T05:33:47.733200Z"
+}
