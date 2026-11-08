@@ -1,0 +1,17 @@
+{
+  "hosting": {
+    "site": "1312312335241",
+    "public": "C:\\Users\\Phuc\\Documents\\GitHub\\asdasddsadsadsad\\gnmath2",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}
