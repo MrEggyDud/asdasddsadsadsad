@@ -1,0 +1,163 @@
+# GN 2.0
+
+A single-page browser game site with no ads or trackers of its own, and optional accounts with cloud saves. It runs entirely on GitHub Pages and uses Firebase for accounts.
+
+Most games come from the community-run gn-math library on jsDelivr. GN Originals adds about 690 open-source games: 65 hand-picked ones in their own row, plus 667 tiny js13kGames entries under the js13k tag. The hand-picked ones include 2048, Hextris, HexGL, A Dark Room, Untrusted, Trimps and Bubble Shooter. All of them are kept with their licenses in [SCHSwork/GN-originals](https://github.com/SCHSwork/GN-originals). About 320 **partner games** from html5games.com (Famobi) and about 2,000 from Playgama are linked too; those can show Famobi's ads and are always marked **AD** (see below).
+
+## Features
+
+**Playing**
+- **Today's pick** (game of the day) at the top of the page, the same for everyone each day
+- **Smart search** that handles typos, missing spaces and abbreviations ("geomtry dash", "fnaf"), and works together with tag filters
+- Sort by name, newest, date added, popular, trending, top rated or my most played
+- Filter by **genre** (17 genres), **source** (library / GN Originals / js13k / partner games), **show** (not played yet, played, favorites, hide broken, well liked) and **type** (ports, Flash, emulators…)
+- **NEW** badges on the 12 most recently added games
+- **Your games**: one compact row that switches between Recent and Favorites (☆ on any card)
+- **✨ Find me a game**: describe what you want ("chill puzzle, nothing scary", "games like Slope", "zombies") and get suggestions with reasons, plus picks based on what you play. It uses `config/game-info.json` (genres, a one-line description and keywords for every game), runs in the browser, and sends nothing anywhere. Optional **✨ AI picks**: set `AI_FINDER_URL` in `js/finder.js` to a Cloudflare Worker running `tools/ai-finder-worker.js` (which calls a [FreeLLMAPI](https://github.com/tashfeenahmed/freellmapi) server), and the finder also asks an AI to choose from the matching games. Players can switch it off in the finder, and it falls back to the normal results if the AI is slow or down
+- **Game jam games switch** above All games hides the js13k games everywhere
+- **Partner games switch** above All games hides the html5games.com games everywhere
+- **Random game** button (hold it for options: genre, source, unplayed only, favorites, skip broken)
+- **Keyboard shortcuts** (press **?**) and full keyboard / screen-reader support
+- **My Stats** (Settings): total play time, games tried, % of the library explored and your most-played games
+- **Loading bar** with real progress, size and time left for big games
+- Fullscreen, **mute** (🔊, or Alt+M), rate and close from the game's top bar; a **⋯ More** menu holds favorite, restart, game info, **save backups**, **copy link to this game**, open in new tab, download, report broken and **clear this game's data** (only that game's saves are removed; other games aren't touched)
+- **Save backups** (`js/game-extras.js`): each time a game closes, its progress is copied into the browser's `gnmath-backups` database (the last 3 different ones per game, plus copies made before clearing or restoring). ⋯ More → Save backups restores one, backs up now, or saves/loads a backup file. Backups only cover what the site saw the game save, the same list "Clear this game's data" uses, and they're left out of cloud saves.
+- **Download sizes**: games over 5 MB show their size on the card, and Show → **⚡ Quick to load** lists games under 10 MB. The nightly game check (`tools/check_games.mjs`) measures what each working game downloads while it starts and saves it to `config/game-sizes.json` (kilobytes per game id). js13k and WASM-4 games are always small, so they count as quick without being measured.
+- **Game links**: `?play=<id>` opens that game when the site loads (⋯ More → Copy link makes one), then it's taken out of the address bar
+
+**GN Originals**
+- A row of open-source games from [SCHSwork/GN-originals](https://github.com/SCHSwork/GN-originals), also under the **GN Originals** tag
+- Each game's Info panel shows who made it, its license and its source code
+- They still load if the main game library is down
+- To add one, follow the steps in that repo's README; the site picks it up on its own
+
+**Partner games (may contain ads)**
+- About 2,000 more come from [Playgama](https://playgama.com/), uploaded there by their developers, listed in `config/partner-games-playgama.json` (ids 220000+). They play from `playgama.com/export/game/<slug>` and follow the same rules below. Only games without in-game purchases are listed, brand knock-offs and gambling or dating themes are left out, and GN 2.0 has no Playgama account, so it earns nothing.
+- About 320 free games from [html5games.com](https://html5games.com/), made and hosted by Famobi. html5games.com lets any site link its games for free as long as the games keep their own ads, so these games are **linked, not copied**: they load from `play.famobi.com` in a sandboxed frame (it can open new tabs but can't navigate GN 2.0 away), and their ads can't be removed.
+- Every one has a yellow **AD** badge on its card, a "May contain ads from html5games.com" notice above the game and an explanation in its Info panel. They're never Today's pick, and the Privacy Policy and Terms explain them.
+- If html5games.com is blocked on the network (common at schools), the site notices that their pictures can't load and hides them automatically, with a note on the switch; players can still choose to show them.
+- GN 2.0 doesn't earn anything from these ads and sends Famobi nothing about players.
+- The list is `config/partner-games.json` (ids 200000+; `pkg` is the Famobi game id, `thumb` the cover file name). Entries with `"libraryDuplicate": true` are games the library or GN Originals already has, so they're hidden. To remove one, delete its entry.
+
+**UBZone games**
+- About 90 games from the unblockedzone site and the repos it uses ([s0n-1m-cr1n3/sc13nc3](https://github.com/s0n-1m-cr1n3/sc13nc3)) that GN 2.0 didn't already have: Eaglercraft versions and clients, FNF mods, Baldi games, Bendy, Undertale, Subway Surfers, Infinite Craft and more. Pick **UBZone games** under Source to see just them.
+- The list is `config/ubzone-games.json` (ids 300000+). It's pinned to one checked commit (`ref`), and `pins` pins every other repo the games load from to the commit that was scanned. `js/ubzone.js` rewrites the games' links (`@main`, `@latest`, no version) to those commits, so the games always load the scanned version, never a newer one.
+- It also takes out Google Analytics, Tag Manager, Cloudflare analytics and ad-bidding tags from game pages before they run, and leaves a do-nothing `gtag()` so the games don't break.
+- Every game file and every outside folder it loads (including compressed Unity code) was scanned before it was listed. Still left out: ad SDKs built into the game code, games that redirect to Yandex, developer site locks, repos that are deleted or private, games whose Unity files load more code from a branch at run time, a broken file, a missing file, and two kidnapping/abuse joke games.
+- The 3 Scratch games open on scratch.mit.edu in a new tab.
+- **Ro16 [DEMO]** (a 2016-style block game, about 300 MB) has its own page, `play/ro16/`, and opens in a new tab. It uses threads, which need cross-origin isolation: `play/ro16/coi-serviceworker.js` (MIT, [gzuidhof/coi-serviceworker](https://github.com/gzuidhof/coi-serviceworker)) adds the headers GitHub Pages can't, only for that folder. The page loads every file from the checked commit, starts the game's threads from a same-origin copy of its script, and blocks every web request except its own files (the engine tries a developer's `localhost:4015` test server, which fails either way).
+- Each game lists its `sources`: the exact repos (and commits) its files come from. They're shown in the game's Info panel, on the takedown form when someone picks a UBZone game, and on the request in Admin Panel → Takedowns, so rights holders can also go to the original repos or file a DMCA notice with GitHub.
+- `probes` lists one small file in every repo (at its pinned commit). The status light checks the unblockedzone one from the player's network; the GN Status page ([SCHSwork/Homework-](https://github.com/SCHSwork/Homework-)) checks all of them every minute in the browser and every 10 minutes from its server monitor. When you change `ref` or `pins`, update `probes` to match.
+- To add more later, scan the new files the same way and only point `ref` or `pins` at commits you've checked.
+
+**Reliable**
+- Every game-library file has three sources (jsDelivr → GitHub → githack). Failed or filtered sources are skipped automatically, and the last game list is kept as an offline backup. When the source a game uses is down or blocked, its links move to one that's been checked and works (jsDelivr's backup addresses, then githack, then GitHub), both in the page and for files the game asks for while it runs (`adaptGameToMirrors` / `gameMirrorHook` in js/app.js). When GitHub is the only source left, scripts and stylesheets are loaded from it as local copies, since browsers won't run them straight from GitHub.
+
+**Clean games**
+- Ad loaders, ad banners and Google Analytics are stripped from every library and GN Originals game before it runs, and known ad and tracking hosts are blocked as a backup.
+
+**Accounts and saves** (optional, username only, no email)
+- Cloud saves of all game progress and site settings, synced every 2 minutes, when a game closes and on sign-out
+- Asks which copy to keep if another device saved newer progress
+- Change password and delete account from the Account panel
+- **Export / Import Data** to back up progress to a file (same format as cloud saves)
+- **Delete account** removes the account, its cloud save and its ratings and reports
+
+**Community**
+- 👍 / 👎 ratings (one vote per account), shown on cards after 3 votes
+- **Report Broken**: games reported by 3+ people in 14 days get a warning flag on their card
+
+**Privacy tools**
+- **Panic button** (⚠ in the header, or the <kbd>`</kbd> key) jumps to a safe site. The site and key can be changed in Settings.
+- Tab cloak presets (Canvas, Classroom, Drive) and a tab-preview cloak
+- `/` jumps to the search bar
+
+**Settings**
+- Light/dark mode, color themes, custom color, card size, font size, compact header, reduced motion
+
+## Owner panel
+
+Open it from **Settings → Owner Panel**. It unlocks with a **GitHub token** for an account that can push to this repo. The token is checked with GitHub and saved only in that browser.
+
+From the panel you can:
+- set the site to **open**, **locked** or **shut down**
+- see **broken reports** (most reported first) and disable a game in one click
+- make accounts **trusted reporters**: one report from them flags a game right away
+**Admin Panel** (Settings → Admin Panel, for game admins, no GitHub token needed):
+- see every account (username, joined, last seen, ratings/reports/submissions), with search and filters
+- make or remove **game admins** and **trusted reporters**, **suspend** accounts (with a reason), remove an account's ratings and reports, or delete its submissions
+- the first game admin is added once in the Firebase console (`admins/<account id>`); after that, admins add others from the panel
+
+Owner Panel also lets you:
+- review **game submissions** sent with "Submit a game": approve, mark added, reject (with a note) or delete. This needs a one-time admin setup: in the Firebase console, add a document `admins/<your account id>` (the panel shows the id), and publish the latest `config/firestore.rules`
+- disable individual games
+- set an announcement banner, a message of the day and extra footer links
+- choose **new-visitor defaults** (theme, card size, sort, and so on)
+
+Changes are saved to `config/owner-settings.json` in this repo, and every visitor loads them on their next visit.
+
+**Making a token:** go to github.com → Settings → Developer settings → Fine-grained tokens → **Generate new token**. Give it access to **only this repository**, with **Contents: Read and write**. Never commit a token or paste it anywhere public.
+
+## Files
+
+```
+index.html             the page (plus the tiny tab-cloak script that must run first)
+sw.js                  background helper: caches covers, lets the site open offline
+manifest.json          app name and icons for "install as app"
+CHANGELOG.md           everything that's changed, newest first (also in the site footer)
+vendor/libs/           the site's own copies of libraries games load from CDNs (jQuery, JSZip,
+                       Phaser, p5…), made by tools/vendor_libs.py; listed in config/local-libs.json
+covers-small/          small copies of the game covers (same picture, scaled to fit 640 px),
+                       made daily by tools/build_small_covers.py; listed in config/small-covers.json
+
+css/styles.css         the shared styles, scenes, and the style picker's previews
+css/skins/<style>.css  one file per site style (Arcade, Aquarium, Receipt...), loaded only
+                       while that style is on; edit a style's look there
+js/
+  ui.js                notices, dialogs, accessibility helpers (loaded first)
+  originals.js         GN Originals: loads games.json from SCHSwork/GN-originals
+  partners.js          partner games from html5games.com: AD badges, player, blocked-network check
+  app.js               game list, search, cards, player, ad/tracker removal,
+                       backup sources, settings, owner panel, panic button, tab cloak
+  accounts.js          accounts and cloud saves (Firebase)
+  library.js           favorites, recent, play time, stats, Today's pick,
+                       ratings and reports, keyboard shortcuts
+  filters.js           Genre / Source / Show filters
+  finder.js            ✨ game finder and random game options
+  submit.js            Submit a game form and owner review
+  admin-core.js        Role checks, profile heartbeat, action log (every page)
+  admin.js             Admin Panel: accounts, roles, suspensions (loaded when opened)
+  loading-bar.js       game loading bar
+  game-menu.js         the ⋯ More menu and per-game data clearing
+  url-options.js, service-worker-setup.js    small start-up helpers
+  skins.js             site styles: the list, the picker, loading css/skins/ files,
+                       and the Aquarium and Pop-up book animations
+  scenes.js            scene backgrounds, your own picture, the frame-rate limit for
+                       looping animations, and Lighter effects (auto-detects slow devices)
+
+assets/icons/          site icon at every size
+config/
+  owner-settings.json  site-wide settings, written by the owner panel
+  firestore.rules      Firebase database security rules
+  game-info.json       genres, description and keywords for every game (used by filters and the finder)
+  partner-games.json   the html5games.com partner games (may contain ads)
+tools/
+  stamp_versions.py    run after editing css/ or js/ (including css/skins/) so browsers load the new version
+```
+
+## Firebase setup
+
+Accounts, cloud saves, ratings and reports use the Firebase project set in `FIREBASE_CONFIG` in `index.html`. That config is meant to be public; the database rules are what keep data safe.
+
+To use a different project:
+1. Create a Firebase project (the free Spark plan is enough).
+2. **Authentication → Sign-in method:** enable **Email/Password**.
+3. **Firestore Database:** create the `(default)` database in production mode.
+4. **Firestore → Rules:** paste in `config/firestore.rules` and click **Publish**. Republish it whenever that file changes.
+5. **Project settings → Your apps → Web:** register an app, then copy its config into `FIREBASE_CONFIG` in `index.html`.
+
+If `FIREBASE_CONFIG` is set to `null`, the account features are turned off and the rest of the site still works.
+
+## Legal
+
+The site includes a Privacy Policy, Terms of Use and a DMCA page (links in the footer). Games belong to their creators. Takedown requests for library games go to the gn-math library that hosts the files. For GN Originals, open an issue on SCHSwork/GN-originals. Partner games aren't hosted here at all; they're links to html5games.com, and removal requests go to the site's email.
