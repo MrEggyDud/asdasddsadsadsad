@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>GitHub HTML → XML Maker</title>
+<style>
+:root{color-scheme:dark;--bg:#11111b;--panel:#181825;--panel2:#1e1e2e;--border:#313244;--muted:#a6adc8;--text:#cdd6f4;--accent:#b4befe;--blue:#89b4fa;--good:#a6e3a1;--bad:#f38ba8}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;padding:28px 16px 42px;background:radial-gradient(110% 90% at 50% 0,#1e1e2e 0%,#11111b 57%,#0b0b12 100%);color:var(--text);font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{width:min(980px,100%);margin:auto}header{margin:0 0 22px}h1{color:#fff;font-size:clamp(1.55rem,4vw,2.1rem);letter-spacing:-.03em;margin:0 0 5px}header p{margin:0;color:var(--muted)}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:19px;margin:14px 0;box-shadow:0 14px 38px #0004}.labelrow{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:9px}label,.heading{font-weight:650;color:#fff}.hint{color:var(--muted);font-size:.83rem}
+input[type=url],textarea{width:100%;border:1px solid #45475a;background:#11111b;color:var(--text);border-radius:10px;padding:12px 13px;font:14px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;outline:none}input[type=url]:focus,textarea:focus,button:focus-visible,.filebtn:focus-within{outline:2px solid var(--accent);outline-offset:2px}textarea{display:block;min-height:285px;resize:vertical;tab-size:2}#out{min-height:320px}
+.row{display:flex;gap:9px;flex-wrap:wrap;margin-top:11px}button,.filebtn{appearance:none;border:1px solid #45475a;border-radius:10px;background:var(--panel2);color:var(--text);font:inherit;font-weight:620;padding:9px 14px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:7px}button:hover:not(:disabled),.filebtn:hover{border-color:var(--accent);color:var(--accent)}button.primary{background:var(--accent);border-color:var(--accent);color:#11111b}button.primary:hover:not(:disabled){background:#cdd6f4;color:#11111b}button:disabled{opacity:.4;cursor:not-allowed}input[type=file]{display:none}#status{min-height:1.5em;margin:12px 0 0;color:var(--muted);font-size:.9rem}#status.good{color:var(--good)}#status.error{color:var(--bad)}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:11px}.step{border:1px solid var(--border);border-radius:11px;background:#1e1e2e;padding:13px}.step b{display:block;color:#fff;margin-bottom:4px}.step span{color:var(--muted);font-size:.86rem}.note{border-left:3px solid var(--accent);padding:9px 12px;background:#1e1e2e;border-radius:0 9px 9px 0;color:var(--muted);font-size:.9rem;margin-top:14px}footer{text-align:center;color:var(--muted);font-size:.82rem;padding:12px 0 2px}
+@media(max-width:650px){body{padding:18px 10px 30px}.panel{padding:14px}.steps{grid-template-columns:1fr}.labelrow{align-items:flex-start;flex-direction:column;gap:2px}textarea{min-height:230px}}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <h1>GitHub HTML → XML Maker</h1>
+  <p>Turns your GitHub HTML page into the XHTML-style XML used by constellation-studies/stellar-workbook-1101.</p>
+</header>
+
+<section class="panel">
+  <div class="labelrow"><label for="url">GitHub file URL (optional)</label><span class="hint">Raw GitHub, GitHub blob, or jsDelivr file URL</span></div>
+  <input id="url" type="url" spellcheck="false" placeholder="https://raw.githubusercontent.com/OWNER/REPO/refs/heads/main/folder/index.html">
+  <div class="row"><button id="fetch" class="primary" type="button">Load HTML from URL</button><span class="hint" style="align-self:center">A direct file URL is required; a repository homepage is not enough.</span></div>
+</section>
+
+<section class="panel">
+  <div class="labelrow"><label for="source">HTML source</label><span class="hint">Paste HTML or choose an .html file instead</span></div>
+  <textarea id="source" spellcheck="false" placeholder="Paste the complete contents of your HTML file here…"></textarea>
+  <div class="row">
+    <label class="filebtn" for="file">Choose HTML file</label><input id="file" type="file" accept=".html,.htm,text/html">
+    <button id="convert" class="primary" type="button">Convert to XML</button>
+    <button id="clear" type="button">Clear</button>
+  </div>
+  <p id="status" role="status" aria-live="polite">Ready. Files are processed locally in your browser; your source is not uploaded.</p>
+</section>
+
+<section class="panel">
+  <div class="labelrow"><label for="out">Converted XML</label><span class="hint">XML declaration · XHTML namespace · CDATA · reference-style module loader</span></div>
+  <textarea id="out" spellcheck="false" readonly placeholder="Your converted XML will appear here…"></textarea>
+  <div class="row"><button id="copy" type="button" disabled>Copy XML</button><button id="download" type="button" disabled>Download .xml</button></div>
+</section>
+
+<section class="panel">
+  <div class="heading" style="margin-bottom:11px">How to use the result with jsDelivr</div>
+  <div class="steps">
+    <div class="step"><b>1. Convert</b><span>Load your GitHub HTML URL, then click Convert to XML.</span></div>
+    <div class="step"><b>2. Upload</b><span>Upload the downloaded .xml beside the original HTML and its JS/CSS/assets.</span></div>
+    <div class="step"><b>3. Open</b><span>Use the matching jsDelivr URL ending in /path/to/index.xml.</span></div>
+  </div>
+  <div class="note"><b>Important:</b> Keep the XML in the same folder as the original HTML unless you also update relative asset paths. The tool preserves the original paths. This follows the repository's XML approach; it does not create the separate SVG wrapper.</div>
+</section>
+<footer>Reference pattern: XHTML namespace + CDATA-wrapped CSS/scripts + dynamic import of the original external module.</footer>
+</main>
+<script>
+'use strict';
+(() => {
+  const XHTML_NS = 'http://www.w3.org/1999/xhtml';
+  const XMLNS_NS = 'http://www.w3.org/2000/xmlns/';
+  const $ = id => document.getElementById(id);
+  const urlInput = $('url'), source = $('source'), output = $('out'), fileInput = $('file'), status = $('status');
+  const fetchButton = $('fetch'), convertButton = $('convert'), copyButton = $('copy'), downloadButton = $('download');
+  let outputName = 'index.xml';
+
+  function report(message, kind='') { status.textContent = message; status.className = kind; }
+  function setOutputName(name) {
+    const base = (name || 'index.html').split('/').pop().replace(/\.(html?|xhtml|xml)$/i, '') || 'index';
+    outputName = base + '.xml';
+  }
+  function rawUrlFromInput(value) {
+    const u = new URL(value.trim());
+    if (!/^https?:$/.test(u.protocol)) throw new Error('Use an http:// or https:// file URL.');
+    if (u.hostname === 'github.com') {
+      const match = u.pathname.match(/^\/([^/]+)\/([^/]+)\/blob\/([^/]+)\/(.+)$/);
+      if (!match) throw new Error('For a GitHub page URL, open a specific HTML file and use its “blob” URL.');
+      return {url: 'https://raw.githubusercontent.com/' + match[1] + '/' + match[2] + '/' + match[3] + '/' + match[4], name: match[4]};
+    }
+    if (u.hostname === 'raw.githubusercontent.com') {
+      const p = u.pathname.split('/').filter(Boolean);
+      return {url: u.href, name: p.slice(3).join('/') || 'index.html'};
+    }
+    if (u.hostname === 'cdn.jsdelivr.net' && u.pathname.startsWith('/gh/')) {
+      return {url: u.href, name: u.pathname.split('/').pop() || 'index.html'};
+    }
+    return {url: u.href, name: u.pathname.split('/').pop() || 'index.html'};
+  }
+
+  async function loadUrl() {
+    const value = urlInput.value.trim();
+    if (!value) { report('Paste a direct GitHub file URL first.', 'error'); return; }
+    fetchButton.disabled = true; report('Loading source file…');
+    try {
+      const info = rawUrlFromInput(value);
+      const response = await fetch(info.url, {mode:'cors', credentials:'omit', cache:'no-store'});
+      if (!response.ok) throw new Error('The file request returned HTTP ' + response.status + '. Check the URL and repository visibility.');
+      const text = await response.text();
+      if (!text.trim()) throw new Error('The URL returned an empty file.');
+      if (/^\s*</.test(text) && /<html[\s>]/i.test(text.slice(0, 1000)) === false && /github\.com/.test(info.url)) {
+        // Continue: valid HTML can have comments or a doctype before the root.
+      }
+      source.value = text;
+      setOutputName(info.name);
+      report('Loaded ' + info.name + '. Click “Convert to XML”.', 'good');
+    } catch (error) {
+      const message = error instanceof TypeError ? 'Could not fetch that URL (often a browser CORS restriction). Use the Raw file URL, or download the HTML from GitHub and choose it below.' : (error.message || String(error));
+      report(message, 'error');
+    } finally { fetchButton.disabled = false; }
+  }
+
+  function appendCData(parent, value) {
+    let rest = String(value);
+    let index;
+    while ((index = rest.indexOf(']]>')) !== -1) {
+      parent.appendChild(parent.ownerDocument.createCDATASection(rest.slice(0, index + 2)));
+      rest = rest.slice(index + 2);
+    }
+    parent.appendChild(parent.ownerDocument.createCDATASection(rest));
+  }
+
+  function referenceLoader(src) {
+    // Same mechanism as the repository's XML: dynamically import the original bundle URL.
+    return '(function(){function start(){import(new URL(' + JSON.stringify(src) + ',document.baseURI).href).catch(function(error){console.error(error);var status=document.getElementById("status");if(status)status.textContent="Load failed: "+String(error);});}if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start,{once:true});else start();})();';
+  }
+
+  function expandEmptyTags(xml) {
+    // Change <meta .../> into <meta ...></meta>, like the reference XML.
+    let result = '', i = 0;
+    while (i < xml.length) {
+      if (xml.startsWith('<![CDATA[', i)) {
+        const end = xml.indexOf(']]>', i + 9);
+        if (end < 0) return result + xml.slice(i);
+        result += xml.slice(i, end + 3); i = end + 3; continue;
+      }
+      if (xml.startsWith('<!--', i)) {
+        const end = xml.indexOf('-->', i + 4);
+        if (end < 0) return result + xml.slice(i);
+        result += xml.slice(i, end + 3); i = end + 3; continue;
+      }
+      if (xml[i] === '<') {
+        const end = xml.indexOf('>', i);
+        if (end < 0) return result + xml.slice(i);
+        const token = xml.slice(i, end + 1);
+        const match = token.match(/^<([A-Za-z_][\w:.-]*)(\s[^<>]*?)?\s*\/>$/);
+        result += match ? '<' + match[1] + (match[2] || '') + '></' + match[1] + '>' : token;
+        i = end + 1;
+      } else {
+        const end = xml.indexOf('<', i);
+        if (end < 0) return result + xml.slice(i);
+        result += xml.slice(i, end); i = end;
+      }
+    }
+    return result;
+  }
+
+  function convert(html) {
+    if (!html.trim()) throw new Error('Paste HTML, load a URL, or choose an HTML file first.');
+    const htmlDoc = new DOMParser().parseFromString(html, 'text/html');
+    const root = htmlDoc.documentElement;
+    if (!root || root.localName.toLowerCase() !== 'html') throw new Error('Could not find an HTML document root.');
+
+    // Import the browser-parsed HTML tree into an XML document using the XHTML namespace.
+    // The HTML doctype is intentionally omitted, as it is in the reference XML.
+    const xmlDoc = document.implementation.createDocument(XHTML_NS, 'html', null);
+    const xhtmlRoot = xmlDoc.importNode(root, true);
+    xmlDoc.replaceChild(xhtmlRoot, xmlDoc.documentElement);
+    xhtmlRoot.setAttributeNS(XMLNS_NS, 'xmlns', XHTML_NS);
+
+    // Apply the reference's external module-script replacement.
+    // Match module scripts with src; crossorigin is not required for the same loader pattern.
+    const scripts = Array.from(xhtmlRoot.getElementsByTagNameNS(XHTML_NS, 'script'));
+    for (const oldScript of scripts) {
+      const type = (oldScript.getAttribute('type') || '').trim().toLowerCase();
+      if (type === 'module' && oldScript.hasAttribute('src')) {
+        const src = oldScript.getAttribute('src');
+        const replacement = xmlDoc.createElementNS(XHTML_NS, 'script');
+        appendCData(replacement, referenceLoader(src));
+        oldScript.parentNode.replaceChild(replacement, oldScript);
+      } else if (oldScript.textContent) {
+        const content = oldScript.textContent;
+        while (oldScript.firstChild) oldScript.removeChild(oldScript.firstChild);
+        appendCData(oldScript, content);
+      }
+    }
+
+    // CSS is kept identical and wrapped in CDATA, as in index.xml.
+    const styles = Array.from(xhtmlRoot.getElementsByTagNameNS(XHTML_NS, 'style'));
+    for (const style of styles) {
+      const css = style.textContent;
+      while (style.firstChild) style.removeChild(style.firstChild);
+      appendCData(style, css);
+    }
+
+    const body = xhtmlRoot.getElementsByTagNameNS(XHTML_NS, 'body')[0];
+    if (body && body.lastChild && body.lastChild.nodeType === 3 && !body.lastChild.nodeValue.trim()) {
+      // Leave the document's body structure otherwise unchanged.
+    }
+    let serialized = new XMLSerializer().serializeToString(xmlDoc);
+    serialized = expandEmptyTags(serialized);
+    return '<?xml version="1.0" encoding="UTF-8"?>\n' + serialized;
+  }
+
+  function doConvert() {
+    try {
+      const result = convert(source.value);
+      const checked = new DOMParser().parseFromString(result, 'application/xml');
+      if (checked.getElementsByTagName('parsererror').length) throw new Error('Generated output did not pass XML parsing.');
+      output.value = result; copyButton.disabled = false; downloadButton.disabled = false;
+      report('Converted successfully. XML validation passed. Download it and upload it beside the original HTML.', 'good');
+    } catch (error) {
+      output.value = ''; copyButton.disabled = true; downloadButton.disabled = true;
+      report(error.message || String(error), 'error');
+    }
+  }
+
+  fetchButton.addEventListener('click', loadUrl);
+  urlInput.addEventListener('keydown', event => { if (event.key === 'Enter') loadUrl(); });
+  convertButton.addEventListener('click', doConvert);
+  fileInput.addEventListener('change', async () => {
+    const file = fileInput.files && fileInput.files[0]; if (!file) return;
+    try { source.value = await file.text(); setOutputName(file.name); report('Loaded ' + file.name + '. Click “Convert to XML”.', 'good'); }
+    catch (error) { report('Could not read file: ' + (error.message || String(error)), 'error'); }
+  });
+  $('clear').addEventListener('click', () => {
+    urlInput.value = ''; source.value = ''; output.value = ''; fileInput.value = '';
+    copyButton.disabled = true; downloadButton.disabled = true; outputName = 'index.xml'; report('Cleared. Ready for another HTML file.');
+  });
+  copyButton.addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(output.value); report('XML copied to clipboard.', 'good'); }
+    catch { output.focus(); output.select(); report('Clipboard access was blocked. The XML is selected; press Ctrl+C.', 'error'); }
+  });
+  downloadButton.addEventListener('click', () => {
+    const blob = new Blob([output.value], {type:'application/xml;charset=utf-8'});
+    const url = URL.createObjectURL(blob); const a = document.createElement('a');
+    a.href = url; a.download = outputName; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  });
+})();
+</script>
+</body>
+</html>
