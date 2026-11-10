@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VUS Notes</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #0f172a;
+    color: #f1f5f9;
+    font-family: Arial, sans-serif;
+    display: flex;
+    overflow: hidden;
+  }
+
+  /* ── Sidebar ── */
+  #sidebar {
+    width: 280px;
+    min-width: 280px;
+    background: #1e293b;
+    border-right: 1px solid #334155;
+    display: flex;
+    flex-direction: column;
+    transition: margin-left 0.2s;
+  }
+  #sidebar.collapsed { margin-left: -280px; }
+
+  #sidebarHeader {
+    padding: 14px 12px;
+    border-bottom: 1px solid #334155;
+  }
+  #newPageBtn {
+    width: 100%;
+    padding: 10px;
+    background: #22c55e;
+    border: none;
+    border-radius: 8px;
+    color: #000;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  #newPageBtn:hover { background: #4ade80; }
+
+  #searchWrap {
+    padding: 10px 12px;
+    border-bottom: 1px solid #334155;
+  }
+  #searchInput {
+    width: 100%;
+    padding: 8px 10px;
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 6px;
+    color: #f1f5f9;
+    font-size: 13px;
+    outline: none;
+  }
+  #searchInput:focus { border-color: #22c55e; }
+  #searchInput::placeholder { color: #64748b; }
+
+  #tabList {
+    flex: 1;
+    overflow-y: auto;
+    padding: 6px;
+  }
+  #tabList::-webkit-scrollbar { width: 5px; }
+  #tabList::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+
+  .tab {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13.5px;
+    color: #94a3b8;
+    transition: background 0.1s;
+    position: relative;
+    user-select: none;
+  }
+  .tab:hover { background: #334155; color: #f1f5f9; }
+  .tab.active { background: #334155; color: #f1f5f9; }
+  .tab.selected {
+    outline: 2px solid #22c55e;
+    outline-offset: -2px;
+  }
+  .tab-icon { font-size: 13px; flex-shrink: 0; }
+  .tab-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Selection checkbox */
+  .tab-check {
+    display: none;
+    width: 16px;
+    height: 16px;
+    accent-color: #22c55e;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  body.select-mode .tab-check {
+    display: block;
+  }
+  body.select-mode .tab-icon {
+    display: none;
+  }
+
+  /* Inline actions — ONLY show when CTRL is held AND tab is hovered */
+  .tab-actions {
+    display: none;
+    gap: 2px;
+    flex-shrink: 0;
+  }
+  body.ctrl-held .tab:hover .tab-actions {
+    display: flex;
+  }
+
+  .tab-action-btn {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 3px 5px;
+    border-radius: 4px;
+    font-size: 12px;
+    line-height: 1;
+  }
+  .tab-action-btn:hover { background: #475569; color: #f1f5f9; }
+  .tab-action-btn.delete:hover { background: rgba(239,68,68,0.2); color: #ef4444; }
+
+  /* 3-dot menu button — always shows on hover as fallback */
+  .tab-menu-btn {
+    opacity: 0;
+    background: none;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-size: 14px;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  .tab:hover .tab-menu-btn { opacity: 1; }
+  body.select-mode .tab-menu-btn { display: none; }
+  .tab-menu-btn:hover { background: #475569; color: #f1f5f9; }
+
+  /* ── Tab Menu Dropdown ── */
+  .tab-dropdown {
+    position: absolute;
+    right: 6px;
+    top: 36px;
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 4px;
+    z-index: 100;
+    min-width: 130px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  }
+  .tab-dropdown-item {
+    padding: 8px 12px;
+    font-size: 13px;
+    color: #f1f5f9;
+    cursor: pointer;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .tab-dropdown-item:hover { background: #334155; }
+  .tab-dropdown-item.delete { color: #ef4444; }
+  .tab-dropdown-item.delete:hover { background: rgba(239,68,68,0.15); }
+
+  #sidebarFooter {
+    padding: 10px 12px;
+    border-top: 1px solid #334155;
+    font-size: 11px;
+    color: #475569;
+    text-align: center;
+  }
+
+  /* ── Main Area ── */
+  #main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  #topBar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid #1f2937;
+    flex-shrink: 0;
+  }
+  #toggleSidebarBtn {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 6px;
+  }
+  #toggleSidebarBtn:hover { background: #1e293b; color: #f1f5f9; }
+  #pageTitle {
+    font-size: 15px;
+    font-weight: 500;
+    color: #f1f5f9;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  #charCount {
+    font-size: 12px;
+    color: #64748b;
+    font-variant-numeric: tabular-nums;
+  }
+
+  #editorWrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 16px 20px;
+    min-height: 0;
+  }
+  #editor {
+    flex: 1;
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: #f1f5f9;
+    font-size: 15px;
+    line-height: 1.7;
+    resize: none;
+    outline: none;
+    font-family: inherit;
+  }
+  #editor::placeholder { color: #475569; }
+
+  #renameModalOverlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+  }
+  #renameModal {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 20px;
+    width: 320px;
+  }
+  #renameModal h3 {
+    font-size: 15px;
+    margin-bottom: 12px;
+    color: #f1f5f9;
+  }
+  #renameInput {
+    width: 100%;
+    padding: 10px 12px;
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    color: #f1f5f9;
+    font-size: 14px;
+    outline: none;
+    margin-bottom: 12px;
+  }
+  #renameInput:focus { border-color: #22c55e; }
+  .modal-btns {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+  }
+  .modal-btn {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    border: none;
+  }
+  .modal-btn.cancel {
+    background: transparent;
+    border: 1px solid #334155;
+    color: #94a3b8;
+  }
+  .modal-btn.cancel:hover { border-color: #475569; color: #f1f5f9; }
+  .modal-btn.confirm {
+    background: #22c55e;
+    color: #000;
+    font-weight: 600;
+  }
+  .modal-btn.confirm:hover { background: #4ade80; }
+  .modal-btn.danger {
+    background: #ef4444;
+    color: #fff;
+    font-weight: 600;
+  }
+  .modal-btn.danger:hover { background: #f87171; }
+
+  /* Selection bar — compact single-line layout */
+  #selectionBar {
+    display: none;
+    padding: 10px 10px;
+    background: #1e293b;
+    border-bottom: 1px solid #334155;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  body.select-mode #selectionBar {
+    display: flex;
+  }
+  body.select-mode #sidebarHeader {
+    display: none;
+  }
+  #selectionCount {
+    font-size: 12px;
+    color: #94a3b8;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .sel-btn {
+    padding: 5px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    cursor: pointer;
+    border: none;
+    font-weight: 600;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .sel-btn.cancel {
+    background: transparent;
+    border: 1px solid #334155;
+    color: #94a3b8;
+  }
+  .sel-btn.cancel:hover { border-color: #475569; color: #f1f5f9; }
+  .sel-btn.delete {
+    background: #ef4444;
+    color: #fff;
+  }
+  .sel-btn.delete:hover { background: #f87171; }
+  .sel-btn.select-all {
+    background: #334155;
+    color: #f1f5f9;
+  }
+  .sel-btn.select-all:hover { background: #475569; }
+
+  /* Hint for CTRL shortcut */
+  #ctrlHint {
+    position: fixed;
+    bottom: 12px;
+    right: 16px;
+    font-size: 12px;
+    color: #64748b;
+    background: #1e293b;
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid #334155;
+    opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none;
+    z-index: 50;
+  }
+  body.ctrl-held #ctrlHint {
+    opacity: 1;
+  }
+</style>
+<base target="_blank">
+</head>
+<body>
+
+<!-- Sidebar -->
+<div id="sidebar">
+  <div id="sidebarHeader">
+    <button id="newPageBtn">+ New page</button>
+  </div>
+  <div id="selectionBar">
+    <span id="selectionCount">0 selected</span>
+    <button class="sel-btn select-all" id="selectAllBtn">Select all</button>
+    <button class="sel-btn cancel" id="cancelSelectBtn">Cancel</button>
+    <button class="sel-btn delete" id="deleteSelectedBtn">Delete</button>
+  </div>
+  <div id="searchWrap">
+    <input id="searchInput" type="text" placeholder="Search notes…" autocomplete="off">
+  </div>
+  <div id="tabList"></div>
+  <div id="sidebarFooter">Auto-saved to browser</div>
+</div>
+
+<!-- Main -->
+<div id="main">
+  <div id="topBar">
+    <button id="toggleSidebarBtn">☰</button>
+    <div id="pageTitle">Untitled</div>
+    <div id="charCount">0 chars</div>
+  </div>
+  <div id="editorWrap">
+    <textarea id="editor" placeholder="Start typing…"></textarea>
+  </div>
+</div>
+
+<!-- Rename Modal -->
+<div id="renameModalOverlay">
+  <div id="renameModal">
+    <h3>Rename page</h3>
+    <input id="renameInput" type="text" placeholder="Page name…" autocomplete="off">
+    <div class="modal-btns">
+      <button class="modal-btn cancel" id="renameCancel">Cancel</button>
+      <button class="modal-btn confirm" id="renameConfirm">Rename</button>
+    </div>
+  </div>
+</div>
+
+<!-- Mass Delete Confirm Modal -->
+<div id="massDeleteOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:200;align-items:center;justify-content:center">
+  <div style="background:#1e293b;border:1px solid #334155;border-radius:12px;padding:20px;width:320px">
+    <h3 style="font-size:15px;margin-bottom:8px;color:#f1f5f9">Delete pages?</h3>
+    <p id="massDeleteText" style="font-size:13px;color:#94a3b8;margin-bottom:16px;line-height:1.4">This will delete 0 pages. This cannot be undone.</p>
+    <div class="modal-btns">
+      <button class="modal-btn cancel" id="massDeleteCancel">Cancel</button>
+      <button class="modal-btn danger" id="massDeleteConfirm">Delete</button>
+    </div>
+  </div>
+</div>
+
+<div id="ctrlHint">CTRL held — hover a tab to see actions</div>
+
+<script>
+const STORAGE_KEY = "vusNotes_v2";
+let pages = [];
+let activeId = null;
+let renameTargetId = null;
+let openDropdownId = null;
+let selectedIds = new Set();
+let selectMode = false;
+
+/* ── DOM refs ── */
+const $sidebar = document.getElementById("sidebar");
+const $tabList = document.getElementById("tabList");
+const $editor = document.getElementById("editor");
+const $pageTitle = document.getElementById("pageTitle");
+const $charCount = document.getElementById("charCount");
+const $searchInput = document.getElementById("searchInput");
+const $renameOverlay = document.getElementById("renameModalOverlay");
+const $renameInput = document.getElementById("renameInput");
+const $renameCancel = document.getElementById("renameCancel");
+const $renameConfirm = document.getElementById("renameConfirm");
+const $selectionCount = document.getElementById("selectionCount");
+const $massDeleteOverlay = document.getElementById("massDeleteOverlay");
+const $massDeleteText = document.getElementById("massDeleteText");
+const $massDeleteCancel = document.getElementById("massDeleteCancel");
+const $massDeleteConfirm = document.getElementById("massDeleteConfirm");
+
+/* ── Storage ── */
+function load() {
+  let loaded = false;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed.pages)) {
+        pages = parsed.pages;
+        activeId = parsed.activeId || null;
+        loaded = true;
+      }
+    }
+  } catch (e) {}
+
+  if (!loaded || pages.length === 0) {
+    const id = "p_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6);
+    pages = [{
+      id,
+      name: "Untitled",
+      content: "",
+      createdAt: Date.now()
+    }];
+    activeId = id;
+    save();
+  }
+
+  if (!activeId || !pages.find(p => p.id === activeId)) {
+    activeId = pages[0].id;
+  }
+}
+
+function save() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ pages, activeId }));
+}
+
+/* ── Selection mode ── */
+function enterSelectMode() {
+  selectMode = true;
+  selectedIds.clear();
+  document.body.classList.add("select-mode");
+  updateSelectionUI();
+  renderTabs();
+}
+
+function exitSelectMode() {
+  selectMode = false;
+  selectedIds.clear();
+  document.body.classList.remove("select-mode");
+  renderTabs();
+}
+
+function toggleSelect(id) {
+  if (selectedIds.has(id)) {
+    selectedIds.delete(id);
+  } else {
+    selectedIds.add(id);
+  }
+  updateSelectionUI();
+  renderTabs();
+}
+
+function selectAllVisible() {
+  const query = $searchInput.value.trim().toLowerCase();
+  const filtered = pages.filter(p =>
+    p.name.toLowerCase().includes(query) ||
+    p.content.toLowerCase().includes(query)
+  );
+  filtered.forEach(p => selectedIds.add(p.id));
+  updateSelectionUI();
+  renderTabs();
+}
+
+function updateSelectionUI() {
+  $selectionCount.textContent = selectedIds.size + " selected";
+}
+
+function deleteSelected() {
+  if (selectedIds.size === 0) return;
+  $massDeleteText.textContent = "This will delete " + selectedIds.size + " page" + (selectedIds.size > 1 ? "s" : "") + ". This cannot be undone.";
+  $massDeleteOverlay.style.display = "flex";
+}
+
+function confirmMassDelete() {
+  pages = pages.filter(p => !selectedIds.has(p.id));
+  if (pages.length === 0) {
+    const id = "p_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6);
+    pages = [{ id, name: "Untitled", content: "", createdAt: Date.now() }];
+    activeId = id;
+  } else if (selectedIds.has(activeId)) {
+    activeId = pages[pages.length - 1].id;
+  }
+  selectedIds.clear();
+  save();
+  renderTabs();
+  loadPage(activeId);
+  exitSelectMode();
+  $massDeleteOverlay.style.display = "none";
+}
+
+/* ── Page CRUD ── */
+function createPage(name, content) {
+  const id = "p_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6);
+  const page = {
+    id,
+    name: name || "Untitled",
+    content: content || "",
+    createdAt: Date.now()
+  };
+  pages.push(page);
+  activeId = id;
+  save();
+  renderTabs();
+  loadPage(id);
+  return page;
+}
+
+function deletePage(id) {
+  pages = pages.filter(p => p.id !== id);
+  if (pages.length === 0) {
+    createPage("Untitled");
+    return;
+  }
+  if (activeId === id) {
+    activeId = pages[pages.length - 1].id;
+  }
+  save();
+  renderTabs();
+  loadPage(activeId);
+}
+
+function duplicatePage(id) {
+  const orig = pages.find(p => p.id === id);
+  if (!orig) return;
+  createPage(orig.name + " (copy)", orig.content);
+}
+
+function renamePage(id, newName) {
+  const page = pages.find(p => p.id === id);
+  if (page) {
+    page.name = newName.trim() || "Untitled";
+    save();
+    renderTabs();
+    if (activeId === id) $pageTitle.textContent = page.name;
+  }
+}
+
+/* ── Editor ── */
+function loadPage(id) {
+  if (selectMode) return;
+  const page = pages.find(p => p.id === id);
+  if (!page) return;
+  activeId = id;
+  $editor.value = page.content;
+  $pageTitle.textContent = page.name;
+  updateCharCount();
+  renderTabs();
+  save();
+  $editor.focus();
+}
+
+function updateActiveContent() {
+  const page = pages.find(p => p.id === activeId);
+  if (page) {
+    page.content = $editor.value;
+    updateCharCount();
+    save();
+  }
+}
+
+function updateCharCount() {
+  $charCount.textContent = $editor.value.length.toLocaleString() + " chars";
+}
+
+/* ── Tabs rendering ── */
+function renderTabs() {
+  const query = $searchInput.value.trim().toLowerCase();
+  const filtered = pages.filter(p =>
+    p.name.toLowerCase().includes(query) ||
+    p.content.toLowerCase().includes(query)
+  );
+
+  $tabList.innerHTML = "";
+
+  if (filtered.length === 0) {
+    $tabList.innerHTML = `<div style="padding:20px;text-align:center;color:#64748b;font-size:13px">No matches</div>`;
+    return;
+  }
+
+  filtered.forEach(page => {
+    const tab = document.createElement("div");
+    tab.className = "tab" + (page.id === activeId ? " active" : "") + (selectedIds.has(page.id) ? " selected" : "");
+
+    const check = document.createElement("input");
+    check.type = "checkbox";
+    check.className = "tab-check";
+    check.checked = selectedIds.has(page.id);
+    check.addEventListener("change", (e) => {
+      e.stopPropagation();
+      toggleSelect(page.id);
+    });
+
+    const icon = document.createElement("span");
+    icon.className = "tab-icon";
+    icon.textContent = "📝";
+
+    const name = document.createElement("span");
+    name.className = "tab-name";
+    name.textContent = page.name;
+
+    const actions = document.createElement("div");
+    actions.className = "tab-actions";
+
+    const renameBtn = document.createElement("button");
+    renameBtn.className = "tab-action-btn";
+    renameBtn.innerHTML = "✏️";
+    renameBtn.title = "Rename";
+    renameBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      openRenameModal(page.id);
+    });
+
+    const dupeBtn = document.createElement("button");
+    dupeBtn.className = "tab-action-btn";
+    dupeBtn.innerHTML = "📄";
+    dupeBtn.title = "Duplicate";
+    dupeBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      duplicatePage(page.id);
+    });
+
+    const delBtn = document.createElement("button");
+    delBtn.className = "tab-action-btn delete";
+    delBtn.innerHTML = "🗑️";
+    delBtn.title = "Delete";
+    delBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      deletePage(page.id);
+    });
+
+    actions.appendChild(renameBtn);
+    actions.appendChild(dupeBtn);
+    actions.appendChild(delBtn);
+
+    const menuBtn = document.createElement("button");
+    menuBtn.className = "tab-menu-btn";
+    menuBtn.innerHTML = "&#x22EE;";
+    menuBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      toggleDropdown(page.id, menuBtn);
+    });
+
+    tab.appendChild(check);
+    tab.appendChild(icon);
+    tab.appendChild(name);
+    tab.appendChild(actions);
+    tab.appendChild(menuBtn);
+
+    tab.addEventListener("click", () => {
+      if (selectMode) {
+        toggleSelect(page.id);
+      } else {
+        closeDropdown();
+        loadPage(page.id);
+      }
+    });
+
+    tab.addEventListener("contextmenu", (e) => {
+      e.preventDefault();
+      if (!selectMode) enterSelectMode();
+      toggleSelect(page.id);
+    });
+
+    $tabList.appendChild(tab);
+  });
+}
+
+/* ── Dropdown menu ── */
+function toggleDropdown(pageId, btnEl) {
+  if (openDropdownId === pageId) {
+    closeDropdown();
+    return;
+  }
+  closeDropdown();
+  openDropdownId = pageId;
+
+  const dropdown = document.createElement("div");
+  dropdown.className = "tab-dropdown";
+  dropdown.id = "activeDropdown";
+
+  const renameItem = document.createElement("div");
+  renameItem.className = "tab-dropdown-item";
+  renameItem.innerHTML = "✏️ Rename";
+  renameItem.addEventListener("click", (e) => {
+    e.stopPropagation();
+    closeDropdown();
+    openRenameModal(pageId);
+  });
+
+  const dupeItem = document.createElement("div");
+  dupeItem.className = "tab-dropdown-item";
+  dupeItem.innerHTML = "📄 Duplicate";
+  dupeItem.addEventListener("click", (e) => {
+    e.stopPropagation();
+    closeDropdown();
+    duplicatePage(pageId);
+  });
+
+  const delItem = document.createElement("div");
+  delItem.className = "tab-dropdown-item delete";
+  delItem.innerHTML = "🗑️ Delete";
+  delItem.addEventListener("click", (e) => {
+    e.stopPropagation();
+    closeDropdown();
+    deletePage(pageId);
+  });
+
+  const selectItem = document.createElement("div");
+  selectItem.className = "tab-dropdown-item";
+  selectItem.innerHTML = "☑️ Select multiple…";
+  selectItem.addEventListener("click", (e) => {
+    e.stopPropagation();
+    closeDropdown();
+    enterSelectMode();
+    toggleSelect(pageId);
+  });
+
+  dropdown.appendChild(renameItem);
+  dropdown.appendChild(dupeItem);
+  dropdown.appendChild(delItem);
+  dropdown.appendChild(selectItem);
+
+  btnEl.parentElement.appendChild(dropdown);
+}
+
+function closeDropdown() {
+  const existing = document.getElementById("activeDropdown");
+  if (existing) existing.remove();
+  openDropdownId = null;
+}
+
+/* ── Rename modal ── */
+function openRenameModal(pageId) {
+  renameTargetId = pageId;
+  const page = pages.find(p => p.id === pageId);
+  $renameInput.value = page ? page.name : "";
+  $renameOverlay.style.display = "flex";
+  $renameInput.focus();
+  $renameInput.select();
+}
+
+function closeRenameModal() {
+  $renameOverlay.style.display = "none";
+  renameTargetId = null;
+}
+
+function confirmRename() {
+  if (renameTargetId) {
+    renamePage(renameTargetId, $renameInput.value);
+  }
+  closeRenameModal();
+}
+
+/* ── Event listeners ── */
+document.getElementById("newPageBtn").addEventListener("click", () => {
+  createPage("Untitled");
+});
+
+document.getElementById("toggleSidebarBtn").addEventListener("click", () => {
+  $sidebar.classList.toggle("collapsed");
+});
+
+$editor.addEventListener("input", updateActiveContent);
+
+$searchInput.addEventListener("input", renderTabs);
+
+$renameCancel.addEventListener("click", closeRenameModal);
+$renameConfirm.addEventListener("click", confirmRename);
+$renameInput.addEventListener("keydown", e => {
+  if (e.key === "Enter") confirmRename();
+  if (e.key === "Escape") closeRenameModal();
+});
+$renameOverlay.addEventListener("click", e => {
+  if (e.target === $renameOverlay) closeRenameModal();
+});
+
+document.getElementById("cancelSelectBtn").addEventListener("click", exitSelectMode);
+document.getElementById("selectAllBtn").addEventListener("click", selectAllVisible);
+document.getElementById("deleteSelectedBtn").addEventListener("click", deleteSelected);
+
+$massDeleteCancel.addEventListener("click", () => {
+  $massDeleteOverlay.style.display = "none";
+});
+$massDeleteConfirm.addEventListener("click", confirmMassDelete);
+$massDeleteOverlay.addEventListener("click", e => {
+  if (e.target === $massDeleteOverlay) $massDeleteOverlay.style.display = "none";
+});
+
+document.addEventListener("click", () => closeDropdown());
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") {
+    closeDropdown();
+    if (selectMode) exitSelectMode();
+  }
+});
+
+/* ── CTRL hold for inline actions ── */
+document.addEventListener("keydown", e => {
+  if (e.key === "Control" && !e.repeat) {
+    document.body.classList.add("ctrl-held");
+  }
+});
+document.addEventListener("keyup", e => {
+  if (e.key === "Control") {
+    document.body.classList.remove("ctrl-held");
+  }
+});
+window.addEventListener("blur", () => {
+  document.body.classList.remove("ctrl-held");
+});
+
+/* ── Boot ── */
+load();
+renderTabs();
+loadPage(activeId);
+</script>
+</body>
+</html>

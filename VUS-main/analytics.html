@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VUS Hub — Analytics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --bg-elevated: #111827;
+    --card: rgba(17, 24, 39, 0.6);
+    --card-hover: rgba(30, 41, 59, 0.7);
+    --border: rgba(51, 65, 85, 0.5);
+    --border-hover: rgba(74, 222, 128, 0.3);
+    --fg: #f1f5f9;
+    --fg-muted: #94a3b8;
+    --fg-dim: #475569;
+    --accent: #22c55e;
+    --accent-glow: rgba(34, 197, 94, 0.15);
+    --accent-soft: rgba(34, 197, 94, 0.08);
+    --danger: #ef4444;
+    --radius: 14px;
+    --font: 'Space Grotesk', sans-serif;
+    --mono: 'JetBrains Mono', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font);
+    min-height: 100vh;
+  }
+
+  .page-shell {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 32px 20px 60px;
+  }
+
+  .page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .page-title {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+
+  .page-sub {
+    font-size: 14px;
+    color: var(--fg-muted);
+    margin-top: 4px;
+  }
+
+  .back-link {
+    font-size: 13px;
+    font-weight: 500;
+    font-family: var(--font);
+    color: var(--fg-muted);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+  }
+
+  .back-link:hover {
+    color: var(--fg);
+    border-color: var(--border-hover);
+  }
+
+  .back-link svg { width: 14px; height: 14px; }
+
+  .controls-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+
+  .control-label {
+    font-size: 13px;
+    color: var(--fg-muted);
+    font-weight: 500;
+  }
+
+  .date-select {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 14px;
+    font-family: var(--font);
+    color: var(--fg);
+    outline: none;
+    cursor: pointer;
+    min-width: 220px;
+    transition: border-color 0.2s;
+  }
+
+  .date-select:focus { border-color: var(--accent); }
+
+  .refresh-btn {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: var(--font);
+    color: var(--fg);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: border-color 0.2s, background 0.2s;
+  }
+
+  .refresh-btn:hover {
+    border-color: var(--border-hover);
+    background: var(--card-hover);
+  }
+
+  .refresh-btn svg { width: 14px; height: 14px; }
+
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  @media (max-width: 640px) {
+    .stat-row { grid-template-columns: 1fr; }
+  }
+
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 18px;
+    backdrop-filter: blur(12px);
+  }
+
+  .stat-label {
+    font-size: 12px;
+    color: var(--fg-muted);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+
+  .stat-value {
+    font-size: 26px;
+    font-weight: 700;
+    font-family: var(--mono);
+    color: var(--fg);
+  }
+
+  .stat-value.accent { color: var(--accent); }
+
+  .stat-desc {
+    font-size: 11.5px;
+    color: var(--fg-dim);
+    margin-top: 6px;
+    line-height: 1.4;
+  }
+
+  .chart-card-header {
+    margin-bottom: 18px;
+  }
+
+  .chart-card-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--fg);
+    margin-bottom: 4px;
+  }
+
+  .chart-card-sub {
+    font-size: 12.5px;
+    color: var(--fg-muted);
+    line-height: 1.5;
+    max-width: 640px;
+  }
+
+  .chart-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px 20px 16px;
+    backdrop-filter: blur(12px);
+  }
+
+  .chart-area {
+    display: flex;
+    gap: 8px;
+  }
+
+  .chart-yaxis {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 340px;
+    padding-bottom: 26px; /* aligns with chart-bar-label height below the bars */
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .chart-yaxis-label {
+    font-size: 10px;
+    font-family: var(--mono);
+    color: var(--fg-dim);
+    line-height: 1;
+    transform: translateY(-50%);
+  }
+
+  .chart-wrap {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    height: 340px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    flex: 1;
+    position: relative;
+    background-image: repeating-linear-gradient(
+      to top,
+      var(--border) 0,
+      var(--border) 1px,
+      transparent 1px,
+      transparent 25%
+    );
+    background-size: 100% 100%;
+  }
+
+  .chart-bar-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    flex: 1 0 32px;
+    min-width: 32px;
+    height: 100%;
+  }
+
+  .bar-track {
+    width: 100%;
+    max-width: 40px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+    position: relative;
+  }
+
+  .chart-bar {
+    width: 100%;
+    background: linear-gradient(180deg, var(--accent), #10b981);
+    border-radius: 6px 6px 0 0;
+    min-height: 3px;
+    transition: height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 4px;
+    position: relative;
+    cursor: default;
+  }
+
+  .chart-bar:hover {
+    filter: brightness(1.15);
+  }
+
+  .bar-value-inside {
+    font-size: 11px;
+    font-weight: 700;
+    font-family: var(--mono);
+    color: #06210f;
+  }
+
+  .bar-value-above {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: var(--mono);
+    color: var(--fg-muted);
+    white-space: nowrap;
+  }
+
+  .chart-bar-label {
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--fg-dim);
+    margin-top: 8px;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .chart-empty {
+    text-align: center;
+    padding: 80px 0;
+    color: var(--fg-dim);
+    font-size: 15px;
+    width: 100%;
+  }
+
+  .chart-loading {
+    text-align: center;
+    padding: 80px 0;
+    color: var(--fg-muted);
+    font-size: 14px;
+    width: 100%;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .chart-bar { transition: none; }
+    .clicks-bar-fill { transition: none; }
+  }
+
+  /* ---- Most Clicked ---- */
+  .clicks-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px 20px;
+    backdrop-filter: blur(12px);
+    margin-top: 20px;
+  }
+
+  .clicks-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+  }
+
+  .clicks-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .clicks-row {
+    display: grid;
+    grid-template-columns: 28px 1fr auto;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 8px;
+    border-radius: 8px;
+  }
+
+  .clicks-row:nth-child(odd) {
+    background: rgba(255,255,255,0.02);
+  }
+
+  .clicks-rank {
+    font-size: 12px;
+    font-family: var(--mono);
+    color: var(--fg-dim);
+    text-align: center;
+  }
+
+  .clicks-rank.top3 {
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  .clicks-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--fg);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .clicks-bar-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 140px;
+  }
+
+  .clicks-bar-track {
+    flex: 1;
+    height: 6px;
+    background: var(--bg-elevated);
+    border-radius: 3px;
+    overflow: hidden;
+    min-width: 60px;
+  }
+
+  .clicks-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), #10b981);
+    border-radius: 3px;
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .clicks-count {
+    font-size: 13px;
+    font-family: var(--mono);
+    color: var(--fg-muted);
+    min-width: 24px;
+    text-align: right;
+  }
+
+  .clicks-toggle-btn {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: var(--font);
+    color: var(--fg);
+    cursor: pointer;
+    display: block;
+    margin: 16px auto 0;
+    transition: border-color 0.2s, background 0.2s;
+  }
+
+  .clicks-toggle-btn:hover {
+    border-color: var(--border-hover);
+    background: var(--card-hover);
+  }
+
+  .clicks-empty {
+    text-align: center;
+    padding: 40px 0;
+    color: var(--fg-dim);
+    font-size: 14px;
+  }
+</style>
+</head>
+<body>
+
+<div class="page-shell">
+
+  <div class="page-header">
+    <div>
+      <div class="page-title">📊 VUS Hub Analytics</div>
+      <div class="page-sub">Hourly tab-open counts, tracked forever, browsable by day.</div>
+    </div>
+    <button type="button" class="back-link" id="backLink">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+      </svg>
+      Back to VUS Hub
+    </button>
+  </div>
+
+  <div class="controls-bar">
+    <span class="control-label">Viewing:</span>
+    <select class="date-select" id="dateSelect"></select>
+    <button class="refresh-btn" id="refreshBtn" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+      </svg>
+      Refresh
+    </button>
+  </div>
+
+  <div class="stat-row">
+    <div class="stat-card">
+      <div class="stat-label">Total Tab-Opens This Day</div>
+      <div class="stat-value accent" id="statTotal">—</div>
+      <div class="stat-desc">Every browser tab that had VUS Hub open for 1+ minute</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Busiest Hour</div>
+      <div class="stat-value" id="statPeak">—</div>
+      <div class="stat-desc" id="statPeakDesc">The 1-hour window with the most tab-opens</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Hours With Any Activity</div>
+      <div class="stat-value" id="statActiveHours">—</div>
+      <div class="stat-desc">Out of 24 possible hours in the day</div>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <div class="chart-card-title">Tab-Opens by Hour of Day</div>
+      <div class="chart-card-sub">Each bar = number of tabs open during that hour (24-hour time, local timezone). A number appears in or above every bar with activity; empty hours show no bar.</div>
+    </div>
+    <div class="chart-area">
+      <div class="chart-yaxis" id="chartYAxis"></div>
+      <div class="chart-wrap" id="chartWrap">
+        <div class="chart-loading">Loading analytics…</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="clicks-card">
+    <div class="clicks-card-header">
+      <div>
+        <div class="chart-card-title">Most Clicked Apps</div>
+        <div class="chart-card-sub">How many times each app was actually opened on the selected day. Bar length is relative to the top result.</div>
+      </div>
+    </div>
+    <div class="clicks-list" id="clicksList">
+      <div class="chart-loading">Loading…</div>
+    </div>
+    <button type="button" class="clicks-toggle-btn" id="clicksToggleBtn" style="display:none;">Show All</button>
+  </div>
+
+  <div class="clicks-card">
+    <div class="clicks-card-header">
+      <div>
+        <div class="chart-card-title">🏆 Most Clicked Apps — Forever</div>
+        <div class="chart-card-sub">All-time totals, added up across every day since tracking started. Doesn't change when you pick a different date above.</div>
+      </div>
+    </div>
+    <div class="clicks-list" id="allTimeClicksList">
+      <div class="chart-loading">Loading…</div>
+    </div>
+    <button type="button" class="clicks-toggle-btn" id="allTimeClicksToggleBtn" style="display:none;">Show All</button>
+  </div>
+
+</div>
+
+<script>
+// firebase.js is loaded dynamically via a Blob-wrapped module import, same
+// technique used elsewhere in VUS Hub (index.html, home.html). This lets
+// analytics.html work correctly whether it's hosted normally or fetched raw
+// (e.g. via the "Open" cloak button pattern) — there's no reliable relative
+// base URL to depend on in the raw-fetch case, and raw.githubusercontent.com
+// serves everything as text/plain, which browsers block for a normal
+// <script type="module" src="..."> due to strict MIME-type checking.
+const FIREBASE_JS_URL = "https://raw.githubusercontent.com/Cra-Z-Gaming/VUS/refs/heads/main/firebase.js";
+
+let VUSAnalyticsAPI = null;
+
+const chartWrap = document.getElementById("chartWrap");
+const chartYAxis = document.getElementById("chartYAxis");
+const dateSelect = document.getElementById("dateSelect");
+const refreshBtn = document.getElementById("refreshBtn");
+const statTotal = document.getElementById("statTotal");
+const statPeak = document.getElementById("statPeak");
+const statPeakDesc = document.getElementById("statPeakDesc");
+const statActiveHours = document.getElementById("statActiveHours");
+
+function formatDateLabel(dateKey, todayKey) {
+  const [y, m, d] = dateKey.split("-").map(Number);
+  const date = new Date(y, m - 1, d);
+  const label = date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric", year: "numeric" });
+  return dateKey === todayKey ? `${label} (Today)` : label;
+}
+
+function formatHourLabel(hour) {
+  // 24-hour format, zero-padded: "00", "01", ... "23"
+  return String(hour).padStart(2, "0");
+}
+
+function formatHourRange(hour) {
+  const start = formatHourLabel(hour);
+  const end = formatHourLabel((hour + 1) % 24);
+  return start + "\u2013" + end;
+}
+
+// A bar needs roughly this many pixels of height for an 11px number to
+// visibly fit inside it without looking cramped or overflowing.
+const MIN_HEIGHT_PX_FOR_INSIDE_LABEL = 22;
+const CHART_HEIGHT_PX = 340; // must match .chart-wrap's CSS height
+
+// Renders 5 evenly-spaced scale labels (0 up to the rounded max) aligned with
+// the gridlines in .chart-wrap's background, so bar heights are readable at
+// a glance in a screenshot without needing to hover over anything.
+function renderYAxis(max) {
+  const steps = 4;
+  const labels = [];
+  for (let i = steps; i >= 0; i--) {
+    labels.push(Math.round((max / steps) * i));
+  }
+  chartYAxis.innerHTML = labels.map(v => '<span class="chart-yaxis-label">' + v + '</span>').join("");
+}
+
+// Persistent references to each hour's bar elements, keyed by hour (0-23).
+// Built once per "session" of viewing a given day; renderChart() then only
+// updates existing elements' style/text in place on subsequent live updates,
+// which is what allows the CSS height transition to actually animate rather
+// than snapping (rebuilding via innerHTML creates brand-new elements with no
+// prior height to transition from).
+let chartBarRefs = null;
+
+function buildChartSkeleton() {
+  chartYAxis.innerHTML = "";
+  chartWrap.innerHTML = "";
+  chartBarRefs = [];
+
+  for (let hour = 0; hour < 24; hour++) {
+    const col = document.createElement("div");
+    col.className = "chart-bar-col";
+
+    const track = document.createElement("div");
+    track.className = "bar-track";
+
+    const aboveLabel = document.createElement("span");
+    aboveLabel.className = "bar-value-above";
+    aboveLabel.style.display = "none";
+
+    const bar = document.createElement("div");
+    bar.className = "chart-bar";
+    bar.style.height = "0%";
+
+    const insideLabel = document.createElement("span");
+    insideLabel.className = "bar-value-inside";
+    insideLabel.style.display = "none";
+
+    const hourLabel = document.createElement("span");
+    hourLabel.className = "chart-bar-label";
+    hourLabel.textContent = formatHourLabel(hour);
+
+    bar.appendChild(insideLabel);
+    track.appendChild(aboveLabel);
+    track.appendChild(bar);
+    col.appendChild(track);
+    col.appendChild(hourLabel);
+    chartWrap.appendChild(col);
+
+    chartBarRefs.push({ bar, aboveLabel, insideLabel });
+  }
+}
+
+function renderChart(hours) {
+  const total = hours.reduce((a, b) => a + b, 0);
+  const max = Math.max(...hours, 1);
+
+  statTotal.textContent = total;
+
+  if (total === 0) {
+    chartWrap.innerHTML = '<div class="chart-empty">No visitors recorded for this day.</div>';
+    chartYAxis.innerHTML = "";
+    chartBarRefs = null; // force a fresh skeleton next time there IS data
+    statPeak.textContent = "—";
+    statPeakDesc.textContent = "No activity recorded for this day";
+    statActiveHours.textContent = "0 / 24";
+    return;
+  }
+
+  const peakHour = hours.indexOf(max);
+  statPeak.textContent = formatHourRange(peakHour) + " (24h)";
+  statPeakDesc.textContent = max + " tab-open" + (max === 1 ? "" : "s") + " during this hour";
+  statActiveHours.textContent = hours.filter(c => c > 0).length + " / 24";
+
+  renderYAxis(max);
+
+  if (!chartBarRefs) {
+    buildChartSkeleton();
+  }
+
+  hours.forEach((count, hour) => {
+    const heightPct = count === 0 ? 0 : Math.max((count / max) * 100, 3);
+    const heightPx = (heightPct / 100) * CHART_HEIGHT_PX;
+    const showLabel = count > 0;
+    const labelFitsInside = showLabel && heightPx >= MIN_HEIGHT_PX_FOR_INSIDE_LABEL;
+    const refs = chartBarRefs[hour];
+
+    refs.bar.style.height = heightPct + "%";
+    refs.bar.title = formatHourRange(hour) + ": " + count + " tab-open" + (count === 1 ? "" : "s");
+
+    if (labelFitsInside) {
+      refs.insideLabel.textContent = count;
+      refs.insideLabel.style.display = "";
+      refs.aboveLabel.style.display = "none";
+    } else if (showLabel) {
+      refs.aboveLabel.textContent = count;
+      refs.aboveLabel.style.display = "";
+      refs.insideLabel.style.display = "none";
+    } else {
+      refs.insideLabel.style.display = "none";
+      refs.aboveLabel.style.display = "none";
+    }
+  });
+}
+
+function escapeHtmlAnalytics(str) {
+  return (str || "").replace(/[&<>"']/g, function(c) {
+    return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c];
+  });
+}
+
+const CLICKS_COLLAPSED_LIMIT = 5;
+
+// Creates an independent ranked-list controller (its own expand/collapse
+// state, data, and DOM row references) for a given list element + toggle
+// button pair. Used for both the daily "Most Clicked" list and the all-time
+// "Forever" list, so expanding one never affects the other.
+//
+// Rows are built once and then updated in place on subsequent renders (text
+// content, bar width, rank) rather than being rebuilt via innerHTML — that's
+// what lets the bar-width CSS transition actually animate smoothly instead
+// of snapping, since a freshly-created element has no prior width to
+// transition from.
+function createRankedList(listEl, toggleBtnEl, emptyMessage) {
+  let expanded = false;
+  let data = [];
+  let rowRefs = []; // DOM refs for however many rows are currently built
+
+  function buildRows(count) {
+    listEl.innerHTML = "";
+    rowRefs = [];
+    for (let i = 0; i < count; i++) {
+      const row = document.createElement("div");
+      row.className = "clicks-row";
+
+      const rank = document.createElement("span");
+      rank.className = "clicks-rank";
+
+      const name = document.createElement("span");
+      name.className = "clicks-name";
+
+      const barWrap = document.createElement("div");
+      barWrap.className = "clicks-bar-wrap";
+
+      const barTrack = document.createElement("div");
+      barTrack.className = "clicks-bar-track";
+
+      const barFill = document.createElement("div");
+      barFill.className = "clicks-bar-fill";
+      barFill.style.width = "0%";
+
+      const countEl = document.createElement("span");
+      countEl.className = "clicks-count";
+
+      barTrack.appendChild(barFill);
+      barWrap.appendChild(barTrack);
+      barWrap.appendChild(countEl);
+      row.appendChild(rank);
+      row.appendChild(name);
+      row.appendChild(barWrap);
+      listEl.appendChild(row);
+
+      rowRefs.push({ row, rank, name, barFill, countEl });
+    }
+  }
+
+  function render() {
+    if (data.length === 0) {
+      listEl.innerHTML = '<div class="clicks-empty">' + emptyMessage + '</div>';
+      rowRefs = [];
+      toggleBtnEl.style.display = "none";
+      return;
+    }
+
+    const max = data[0].count; // already sorted most-clicked first
+    const visible = expanded ? data : data.slice(0, CLICKS_COLLAPSED_LIMIT);
+
+    if (rowRefs.length !== visible.length) {
+      buildRows(visible.length);
+    }
+
+    visible.forEach(function(entry, i) {
+      const rankNum = i + 1;
+      const widthPct = Math.max((entry.count / max) * 100, 4);
+      const refs = rowRefs[i];
+
+      refs.rank.textContent = "#" + rankNum;
+      refs.rank.className = rankNum <= 3 ? "clicks-rank top3" : "clicks-rank";
+      refs.name.textContent = entry.name;
+      refs.barFill.style.width = widthPct + "%";
+      refs.countEl.textContent = entry.count;
+    });
+
+    if (data.length > CLICKS_COLLAPSED_LIMIT) {
+      toggleBtnEl.style.display = "block";
+      toggleBtnEl.textContent = expanded ? "Show Top 5" : "Show All (" + data.length + ")";
+    } else {
+      toggleBtnEl.style.display = "none";
+    }
+  }
+
+  toggleBtnEl.addEventListener("click", function() {
+    expanded = !expanded;
+    rowRefs = []; // row count is likely changing, force a rebuild
+    render();
+  });
+
+  return {
+    setLoading: function() {
+      listEl.innerHTML = '<div class="chart-loading">Loading…</div>';
+      rowRefs = [];
+      toggleBtnEl.style.display = "none";
+    },
+    setError: function(message) {
+      listEl.innerHTML = '<div class="clicks-empty">' + message + '</div>';
+      rowRefs = [];
+      toggleBtnEl.style.display = "none";
+    },
+    // Live update: same context (same day), just fresh numbers — preserves
+    // whatever expand/collapse state the person currently has.
+    setData: function(newData) {
+      data = newData;
+      render();
+    },
+    // Context change (e.g. switching to a different day): reset to
+    // collapsed and force a full rebuild, since animating between two
+    // unrelated days' rankings wouldn't make sense.
+    resetAndSetData: function(newData) {
+      data = newData;
+      expanded = false;
+      rowRefs = [];
+      render();
+    }
+  };
+}
+
+const dailyClicksList = createRankedList(
+  document.getElementById("clicksList"),
+  document.getElementById("clicksToggleBtn"),
+  "No app opens recorded for this day."
+);
+
+const allTimeClicksList = createRankedList(
+  document.getElementById("allTimeClicksList"),
+  document.getElementById("allTimeClicksToggleBtn"),
+  "No app opens recorded yet."
+);
+
+
+
+// The "Forever" leaderboard doesn't depend on the selected date — subscribe
+// once at startup and leave it running for the lifetime of the page, rather
+// than tearing it down/rebuilding when the date picker changes.
+function loadAllTimeClicks() {
+  allTimeClicksList.setLoading();
+  if (!VUSAnalyticsAPI || !VUSAnalyticsAPI.watchAllTimeClicks) {
+    allTimeClicksList.setError("Connecting to Firebase…");
+    return;
+  }
+  VUSAnalyticsAPI.watchAllTimeClicks(function(clicks) {
+    allTimeClicksList.setData(clicks);
+  });
+}
+
+// Active live-subscription unsubscribe functions for whichever day is
+// currently selected. Torn down and replaced every time the date picker
+// changes, so we're never listening to more than one day's data at once.
+let unsubscribeHourly = null;
+let unsubscribeClicks = null;
+
+function teardownDaySubscriptions() {
+  if (unsubscribeHourly) { unsubscribeHourly(); unsubscribeHourly = null; }
+  if (unsubscribeClicks) { unsubscribeClicks(); unsubscribeClicks = null; }
+}
+
+function loadAndRenderDay(dateKey) {
+  teardownDaySubscriptions();
+  chartBarRefs = null; // force a fresh skeleton for the new day, no cross-day animation
+  chartWrap.innerHTML = '<div class="chart-loading">Loading…</div>';
+  dailyClicksList.setLoading();
+
+  if (!VUSAnalyticsAPI || !VUSAnalyticsAPI.watchHourlyVisits) {
+    chartWrap.innerHTML = '<div class="chart-loading">Connecting to Firebase…</div>';
+    dailyClicksList.setError("Connecting to Firebase…");
+    return;
+  }
+
+  let isFirstClicksUpdate = true;
+
+  // Both subscriptions push live updates the instant Firebase sees a write —
+  // no polling, no refresh interval. Bars animate smoothly via renderChart()
+  // updating existing DOM elements in place rather than rebuilding them.
+  unsubscribeHourly = VUSAnalyticsAPI.watchHourlyVisits(dateKey, function(hours) {
+    renderChart(hours);
+  });
+
+  unsubscribeClicks = VUSAnalyticsAPI.watchAppClicks(dateKey, function(clicks) {
+    if (isFirstClicksUpdate) {
+      isFirstClicksUpdate = false;
+      dailyClicksList.resetAndSetData(clicks); // fresh day: collapse to top 5
+    } else {
+      dailyClicksList.setData(clicks); // live tick: preserve expand state
+    }
+  });
+}
+
+async function populateDatePicker(preserveSelection) {
+  const todayKey = VUSAnalyticsAPI ? VUSAnalyticsAPI.getDayKey(new Date()) : null;
+  const previousValue = preserveSelection ? dateSelect.value : null;
+
+  let dayKeys = [];
+  if (VUSAnalyticsAPI) {
+    try {
+      dayKeys = await VUSAnalyticsAPI.getAnalyticsDayKeys();
+    } catch (e) {
+      dayKeys = [];
+    }
+  }
+
+  if (todayKey && dayKeys.indexOf(todayKey) === -1) {
+    dayKeys.unshift(todayKey);
+  }
+  dayKeys.sort().reverse();
+
+  dateSelect.innerHTML = "";
+
+  if (dayKeys.length === 0) {
+    const opt = document.createElement("option");
+    opt.textContent = "No data yet";
+    opt.disabled = true;
+    dateSelect.appendChild(opt);
+    return null;
+  }
+
+  dayKeys.forEach(function(key) {
+    const opt = document.createElement("option");
+    opt.value = key;
+    opt.textContent = formatDateLabel(key, todayKey);
+    dateSelect.appendChild(opt);
+  });
+
+  const target = (previousValue && dayKeys.indexOf(previousValue) !== -1) ? previousValue : dayKeys[0];
+  dateSelect.value = target;
+  return target;
+}
+
+dateSelect.addEventListener("change", function(e) {
+  loadAndRenderDay(e.target.value);
+});
+
+refreshBtn.addEventListener("click", async function() {
+  const key = await populateDatePicker(true);
+  if (key) loadAndRenderDay(key);
+});
+
+// "Back to VUS Hub" — raw.githubusercontent.com serves everything as
+// text/plain, so a plain <a href> pointed at index.html's raw URL would just
+// show the page's source code instead of rendering it. Same fix as the
+// cloak-open button elsewhere in VUS Hub: fetch the HTML as text, then
+// document.write() it into a fresh tab so the browser actually renders it.
+const backLink = document.getElementById("backLink");
+const INDEX_HTML_URL = "https://raw.githubusercontent.com/Cra-Z-Gaming/VUS/refs/heads/main/index.html";
+
+backLink.addEventListener("click", function() {
+  fetch(INDEX_HTML_URL + "?v=" + Date.now())
+    .then(function(r) {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.text();
+    })
+    .then(function(text) {
+      const win = window.open("about:blank", "_blank");
+      if (!win) return;
+      win.document.open();
+      win.document.write(text);
+      win.document.close();
+    })
+    .catch(function() {
+      // Silent failure is fine here — worst case the click just does nothing
+    });
+});
+
+async function init() {
+  const key = await populateDatePicker(false);
+  if (key) loadAndRenderDay(key);
+}
+
+fetch(FIREBASE_JS_URL + "?v=" + Date.now())
+  .then(function(r) {
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    return r.text();
+  })
+  .then(function(code) {
+    const blob = new Blob([code], { type: "application/javascript" });
+    const blobUrl = URL.createObjectURL(blob);
+    return import(blobUrl);
+  })
+  .then(function(mod) {
+    VUSAnalyticsAPI = {
+      getHourlyVisits: mod.getHourlyVisits,
+      watchHourlyVisits: mod.watchHourlyVisits,
+      getAnalyticsDayKeys: mod.getAnalyticsDayKeys,
+      getAppClicks: mod.getAppClicks,
+      watchAppClicks: mod.watchAppClicks,
+      getAllTimeClicks: mod.getAllTimeClicks,
+      watchAllTimeClicks: mod.watchAllTimeClicks,
+      getDayKey: mod.getDayKey
+    };
+    init();
+    loadAllTimeClicks();
+  })
+  .catch(function() {
+    chartWrap.innerHTML = '<div class="chart-empty">Failed to connect to Firebase. Try refreshing the page.</div>';
+  });
+</script>
+</body>
+</html>
